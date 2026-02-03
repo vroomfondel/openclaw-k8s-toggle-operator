@@ -11,7 +11,7 @@ ARG debian_version
 
 RUN apt update && \
     apt -y full-upgrade && \
-    apt -y install htop procps iputils-ping locales vim tini bind9-dnsutils ipset git libolm-dev && \
+    apt -y install htop procps iputils-ping locales vim tini bind9-dnsutils ipset git libolm-dev build-essential cmake && \
     pip install --upgrade pip && \
     rm -rf /var/lib/apt/lists/*
 
