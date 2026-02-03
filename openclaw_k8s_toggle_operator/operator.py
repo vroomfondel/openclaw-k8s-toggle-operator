@@ -18,6 +18,7 @@ from nio import (
     AsyncClient,
     AsyncClientConfig,
     InviteMemberEvent,
+    LocalProtocolError,
     LoginResponse,
     MegolmEvent,
     RoomMessageText,
@@ -133,7 +134,11 @@ class OperatorBot:
 
     async def trust_devices_for_user(self, user_id: str) -> None:
         """Auto-trust all devices of a given user (TOFU)."""
-        await self.client.keys_query()
+        try:
+            await self.client.keys_query()
+        except LocalProtocolError:
+            logger.debug("No key query required — skipping device trust for {}", user_id)
+            return
         device_store = self.client.device_store
         if user_id not in device_store:
             return

@@ -41,6 +41,7 @@ dependencies = [
 
 [project.scripts]
 openclaw-k8s-toggle-operator = "openclaw_k8s_toggle_operator.__main__:main"
+openclaw-k8s-toggle-operator-conntest = "openclaw_k8s_toggle_operator.__main__:connectortest"
 
 [project.urls]
 Homepage = "https://github.com/vroomfondel/openclaw-k8s-toggle-operator"

@@ -91,6 +91,41 @@ def _handle_signal() -> None:
         task.cancel()
 
 
+async def _async_connectortest() -> int:
+    """Test Matrix homeserver connectivity and credentials.
+
+    Returns 0 on success, 1 on failure.
+    """
+    try:
+        cfg = OperatorConfig.from_env()
+    except ValueError as exc:
+        glogger.error("Configuration error: {}", exc)
+        return 1
+
+    from nio import AsyncClient, LoginResponse
+
+    client = AsyncClient(cfg.matrix_homeserver, cfg.matrix_user)
+    try:
+        glogger.info("Attempting login to {} as {}", cfg.matrix_homeserver, cfg.matrix_user)
+        resp = await client.login(cfg.matrix_password, device_name="connectortest")
+        if isinstance(resp, LoginResponse):
+            glogger.info("Login successful (device_id={})", resp.device_id)
+            return 0
+        else:
+            glogger.error("Login failed: {}", resp)
+            return 1
+    except Exception as exc:
+        glogger.error("Connection error: {}", exc)
+        return 1
+    finally:
+        await client.close()
+
+
+def connectortest() -> None:
+    """CLI entry point: test Matrix homeserver connectivity and exit."""
+    sys.exit(asyncio.run(_async_connectortest()))
+
+
 def main() -> None:
     loop = asyncio.new_event_loop()
     for sig in (signal.SIGTERM, signal.SIGINT):
@@ -102,4 +137,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "conntest":
+        connectortest()
+    else:
+        main()
