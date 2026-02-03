@@ -134,6 +134,8 @@ class OperatorBot:
 
     async def trust_devices_for_user(self, user_id: str) -> None:
         """Auto-trust all devices of a given user (TOFU)."""
+        if self.client.olm:
+            self.client.olm.users_for_key_query.add(user_id)
         try:
             await self.client.keys_query()
         except LocalProtocolError:
@@ -192,6 +194,7 @@ class OperatorBot:
                     room_id=room.room_id,
                     message_type="m.room.message",
                     content={"msgtype": "m.text", "body": f"\U0001f99e {event.body}"},
+                    ignore_unverified_devices=True,
                 )
             except Exception as exc:
                 logger.error("Failed to send echo ACK: {}", exc)
@@ -204,6 +207,7 @@ class OperatorBot:
                 room_id=room.room_id,
                 message_type="m.room.message",
                 content={"msgtype": "m.text", "body": response},
+                ignore_unverified_devices=True,
             )
         except Exception as exc:
             logger.error("Failed to send response: {}", exc)
@@ -235,6 +239,7 @@ class OperatorBot:
                         "Please send your command again."
                     ),
                 },
+                ignore_unverified_devices=True,
             )
         except Exception as exc:
             logger.warning("Failed to send decryption warning: {}", exc)
