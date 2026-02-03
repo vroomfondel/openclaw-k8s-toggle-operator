@@ -91,7 +91,7 @@ matrix-nio requires all recipient devices to be verified before `room_send` will
 
 **Trust hierarchy** (each level calls into the next):
 - `trust_devices_in_room(room_id)` — iterates all room members (except self), calls `trust_devices_for_user` for each
-- `trust_devices_for_user(user_id)` — runs `keys_query()` (catches `LocalProtocolError` when no query pending), then iterates `client.device_store[user_id]` and verifies any unverified devices
+- `trust_devices_for_user(user_id)` — forces `user_id` into `olm.users_for_key_query` then runs `keys_query()` (catches `LocalProtocolError` as fallback), then iterates `client.device_store[user_id]` and verifies any unverified devices
 - `trust_all_allowed_devices()` — startup-only, trusts allowed users via `trust_devices_for_user`
 
 **When trust runs:**
@@ -99,7 +99,10 @@ matrix-nio requires all recipient devices to be verified before `room_send` will
 - **On invite**: `trust_devices_for_user(sender)` after joining room
 - **Before every send** (`on_message`, `on_megolm_event`): `trust_devices_in_room(room_id)` — this is critical because `sync_forever` continuously populates the device store with newly discovered devices that must be verified before the bot can encrypt outgoing messages for them
 
-**Common pitfall**: Trusting only at startup or only the sender is insufficient. Encrypted `room_send` must encrypt for *all* devices of *all* room members. New devices appear in the device store during ongoing syncs and must be verified before the next send, otherwise matrix-nio raises `"Device X for user Y is not verified or blacklisted"`.
+**Common pitfalls**:
+- Trusting only at startup or only the sender is insufficient. Encrypted `room_send` must encrypt for *all* devices of *all* room members. New devices appear in the device store during ongoing syncs and must be verified before the next send, otherwise matrix-nio raises `"Device X for user Y is not verified or blacklisted"`.
+- `keys_query()` only queries users in `olm.users_for_key_query`. When that set is empty (no pending queries from sync), it raises `LocalProtocolError` and the device store stays stale. Fix: always add the user to `olm.users_for_key_query` before calling `keys_query()`.
+- All `room_send()` calls use `ignore_unverified_devices=True` as a safety net against race conditions where a device appears between the trust loop and the send. Ignored devices still receive encryption keys — they just aren't formally verified. Do not remove this flag.
 
 ## Code Style
 
