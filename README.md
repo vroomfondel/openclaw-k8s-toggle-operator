@@ -6,6 +6,8 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/xomoxcc/openclaw-k8s-toggle-operator?logo=docker)](https://hub.docker.com/r/xomoxcc/openclaw-k8s-toggle-operator/tags)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/openclaw-k8s-toggle-operator?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=PyPi+Downloads)](https://pepy.tech/projects/openclaw-k8s-toggle-operator)
 
+[![Gemini_Generated_Image_7vikwe7vikwe7vik_250x250.png](Gemini_Generated_Image_7vikwe7vikwe7vik_250x250.png)](https://hub.docker.com/r/xomoxcc/openclaw-k8s-toggle-operator)
+
 Matrix-controlled Kubernetes deployment toggle operator. Connects to a Matrix
 homeserver with E2E encryption and listens for chat commands to scale a K8s
 deployment between 0 and 1 replicas.

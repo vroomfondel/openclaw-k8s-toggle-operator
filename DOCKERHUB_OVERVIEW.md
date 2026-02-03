@@ -3,6 +3,8 @@
 ![Cumulative Clones](https://img.shields.io/endpoint?logo=github&url=https://gist.githubusercontent.com/vroomfondel/9519842e68e2ce05e5e223cb502d9e3d/raw/openclaw-k8s-toggle-operator_clone_count.json)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/openclaw-k8s-toggle-operator?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=PyPi+Downloads)](https://pepy.tech/projects/openclaw-k8s-toggle-operator)
 
+[![Gemini_Generated_Image_7vikwe7vikwe7vik_250x250.png](https://github.com/vroomfondel/openclaw-k8s-toggle-operator/raw/main/Gemini_Generated_Image_7vikwe7vikwe7vik_250x250.png)](https://github.com/vroomfondel/openclaw-k8s-toggle-operator)
+
 # openclaw-k8s-toggle-operator
 
 Matrix-controlled Kubernetes deployment toggle operator. Connects to a Matrix
