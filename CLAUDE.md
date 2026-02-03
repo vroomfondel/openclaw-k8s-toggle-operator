@@ -43,7 +43,7 @@ pytest tests/test_config.py::TestClassName::test_method_name
 - **Origin**: Refactored from `clawdbot_operator.py` (an Ansible-managed ConfigMap), which is a Matrix-controlled K8s deployment scaler using matrix-nio with E2E encryption
 - **Flat layout**: Package at `openclaw_k8s_toggle_operator/` (not src-layout)
 - **Build backend**: Hatchling — version is single-sourced from `__init__.py` via `[tool.hatch.version]`
-- **Entry point**: Console script `openclaw-k8s-toggle-operator` → `__main__:main()`
+- **Entry points**: Console scripts `openclaw-k8s-toggle-operator` → `__main__:main()` and `openclaw-k8s-toggle-operator-conntest` → `__main__:connectortest()`
 - **Logging**: loguru with `configure_logging()` in `__init__.py`; disabled by default, enabled in `__main__.py`
 - **Signal handling**: SIGTERM/SIGINT for clean container shutdown
 - **Dependencies**: `kubernetes` (K8s Python client), `matrix-nio[e2e]` (Matrix with E2E encryption), `loguru`, `tabulate` (startup printout)
@@ -53,7 +53,7 @@ pytest tests/test_config.py::TestClassName::test_method_name
 - **`__init__.py`** — Version, loguru `configure_logging()` helper
 - **`config.py`** — Frozen `OperatorConfig` dataclass with `from_env()` classmethod; reads Matrix credentials, allowed users, deployment target, and crypto store path from environment variables
 - **`operator.py`** — `OperatorBot` class handling Matrix login, E2E encryption (TOFU device trust), command parsing, and K8s deployment scaling via `AppsV1Api.patch_namespaced_deployment_scale()`
-- **`__main__.py`** — Signal setup, loads config, initialises operator, runs the main async loop with auto-reconnect and exponential backoff
+- **`__main__.py`** — Signal setup, loads config, initialises operator, runs the main async loop with auto-reconnect and exponential backoff; also provides `connectortest()` CLI for Matrix connectivity checks
 
 ### Environment Variables
 
@@ -82,8 +82,24 @@ pytest tests/test_config.py::TestClassName::test_method_name
 - **Frozen dataclass config**: Immutable `OperatorConfig` with `from_env()` classmethod, validated at construction
 - **In-cluster K8s access**: Uses pod service account via `kubernetes.config.load_incluster_config()`
 - **E2E encryption**: matrix-nio `AsyncClient` with `AsyncClientConfig(encryption_enabled=True)`, persistent crypto store on PVC
-- **TOFU device trust**: Auto-trusts devices of allowed users on invite/message
+- **TOFU device trust**: Auto-trusts devices of allowed users on invite/message (see E2E trust flow below)
 - **Graceful shutdown**: Signal handlers cancel asyncio tasks; auto-reconnect loop with exponential backoff (max 20 retries)
+
+### E2E Encryption & Device Trust Flow
+
+matrix-nio requires all recipient devices to be verified before `room_send` will encrypt. The bot uses TOFU (Trust On First Use) via `client.verify_device()`.
+
+**Trust hierarchy** (each level calls into the next):
+- `trust_devices_in_room(room_id)` — iterates all room members (except self), calls `trust_devices_for_user` for each
+- `trust_devices_for_user(user_id)` — runs `keys_query()` (catches `LocalProtocolError` when no query pending), then iterates `client.device_store[user_id]` and verifies any unverified devices
+- `trust_all_allowed_devices()` — startup-only, trusts allowed users via `trust_devices_for_user`
+
+**When trust runs:**
+- **Startup**: `trust_all_allowed_devices()` after initial sync
+- **On invite**: `trust_devices_for_user(sender)` after joining room
+- **Before every send** (`on_message`, `on_megolm_event`): `trust_devices_in_room(room_id)` — this is critical because `sync_forever` continuously populates the device store with newly discovered devices that must be verified before the bot can encrypt outgoing messages for them
+
+**Common pitfall**: Trusting only at startup or only the sender is insufficient. Encrypted `room_send` must encrypt for *all* devices of *all* room members. New devices appear in the device store during ongoing syncs and must be verified before the next send, otherwise matrix-nio raises `"Device X for user Y is not verified or blacklisted"`.
 
 ## Code Style
 

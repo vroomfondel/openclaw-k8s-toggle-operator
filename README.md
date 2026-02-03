@@ -204,6 +204,22 @@ openclaw-k8s-toggle-operator
 python -m openclaw_k8s_toggle_operator
 ```
 
+### Connectivity test
+
+Test Matrix homeserver connectivity without starting the full operator
+(useful as a pre-flight check or container readiness probe):
+
+```bash
+# Via console script (after pip install)
+openclaw-k8s-toggle-operator-conntest
+
+# Via Python module
+python -m openclaw_k8s_toggle_operator conntest
+```
+
+Exits 0 on successful login, 1 on failure. Only tests Matrix — does not
+require in-cluster K8s access.
+
 ## Development
 
 ### Makefile targets

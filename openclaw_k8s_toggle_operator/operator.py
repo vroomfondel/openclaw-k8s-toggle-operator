@@ -137,8 +137,7 @@ class OperatorBot:
         try:
             await self.client.keys_query()
         except LocalProtocolError:
-            logger.debug("No key query required — skipping device trust for {}", user_id)
-            return
+            logger.debug("No key query required for {} — using existing device store", user_id)
         device_store = self.client.device_store
         if user_id not in device_store:
             return
@@ -150,6 +149,16 @@ class OperatorBot:
     async def trust_all_allowed_devices(self) -> None:
         """Trust devices of all allowed users."""
         for user_id in self.config.allowed_users:
+            await self.trust_devices_for_user(user_id)
+
+    async def trust_devices_in_room(self, room_id: str) -> None:
+        """Trust all devices of all members in a room (TOFU)."""
+        room = self.client.rooms.get(room_id)
+        if not room:
+            return
+        for user_id in room.users:
+            if user_id == self.client.user_id:
+                continue
             await self.trust_devices_for_user(user_id)
 
     # -- Matrix event callbacks ----------------------------------------------
@@ -174,6 +183,8 @@ class OperatorBot:
             return
 
         logger.info("Command from {} in {}: {}", event.sender, room.room_id, event.body)
+
+        await self.trust_devices_in_room(room.room_id)
 
         if self.config.echo_mode:
             try:
@@ -210,7 +221,7 @@ class OperatorBot:
             room.room_id,
             event.session_id,
         )
-        await self.trust_devices_for_user(event.sender)
+        await self.trust_devices_in_room(room.room_id)
 
         try:
             await self.client.room_send(
