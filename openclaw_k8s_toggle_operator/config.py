@@ -6,6 +6,11 @@ import os
 from dataclasses import dataclass
 
 
+def _parse_bool(value: str) -> bool:
+    """Parse a string into a boolean (truthy: ``"true"``, ``"1"``, ``"yes"``)."""
+    return value.strip().lower() in ("true", "1", "yes")
+
+
 @dataclass(frozen=True)
 class OperatorConfig:
     """Immutable configuration for the Matrix-controlled K8s toggle operator.
@@ -20,6 +25,7 @@ class OperatorConfig:
     deployment_name: str
     deployment_namespace: str
     crypto_store_path: str
+    echo_mode: bool
 
     @classmethod
     def from_env(cls) -> OperatorConfig:
@@ -43,6 +49,11 @@ class OperatorConfig:
             K8s namespace (default ``"clawdbot"``).
         CRYPTO_STORE_PATH : str, optional
             Path for persistent E2E key storage (default ``"/data/crypto_store"``).
+        ECHO_MODE : str, optional
+            When enabled the bot echoes the user's message (prefixed with a
+            lobster emoji) before processing the command.  Truthy values are
+            ``"true"``, ``"1"``, and ``"yes"`` (case-insensitive).
+            Default ``"true"``.
 
         Raises
         ------
@@ -73,4 +84,5 @@ class OperatorConfig:
             deployment_name=os.environ.get("DEPLOYMENT_NAME", "clawdbot").strip(),
             deployment_namespace=os.environ.get("DEPLOYMENT_NAMESPACE", "clawdbot").strip(),
             crypto_store_path=os.environ.get("CRYPTO_STORE_PATH", "/data/crypto_store").strip(),
+            echo_mode=_parse_bool(os.environ.get("ECHO_MODE", "true")),
         )

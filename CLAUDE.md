@@ -66,6 +66,7 @@ pytest tests/test_config.py::TestClassName::test_method_name
 | `DEPLOYMENT_NAME` | no | `clawdbot` |
 | `DEPLOYMENT_NAMESPACE` | no | `clawdbot` |
 | `CRYPTO_STORE_PATH` | no | `/data/crypto_store` |
+| `ECHO_MODE` | no | `true` (echo user messages with lobster emoji before processing) |
 
 ### Bot Commands
 

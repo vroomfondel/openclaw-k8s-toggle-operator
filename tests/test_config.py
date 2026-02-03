@@ -15,6 +15,7 @@ _ALL_ENV_VARS = [
     "DEPLOYMENT_NAME",
     "DEPLOYMENT_NAMESPACE",
     "CRYPTO_STORE_PATH",
+    "ECHO_MODE",
 ]
 
 
@@ -47,6 +48,7 @@ class TestOperatorConfigFromEnv:
         assert cfg.deployment_name == "clawdbot"
         assert cfg.deployment_namespace == "clawdbot"
         assert cfg.crypto_store_path == "/data/crypto_store"
+        assert cfg.echo_mode is True
 
     def test_custom_values(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _clear_env(monkeypatch)
@@ -57,6 +59,7 @@ class TestOperatorConfigFromEnv:
         monkeypatch.setenv("DEPLOYMENT_NAME", "  my-deploy  ")
         monkeypatch.setenv("DEPLOYMENT_NAMESPACE", "  my-ns  ")
         monkeypatch.setenv("CRYPTO_STORE_PATH", "  /tmp/store  ")
+        monkeypatch.setenv("ECHO_MODE", "false")
 
         cfg = OperatorConfig.from_env()
 
@@ -67,6 +70,7 @@ class TestOperatorConfigFromEnv:
         assert cfg.deployment_name == "my-deploy"
         assert cfg.deployment_namespace == "my-ns"
         assert cfg.crypto_store_path == "/tmp/store"
+        assert cfg.echo_mode is False
 
     def test_missing_matrix_user_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _clear_env(monkeypatch)
@@ -127,6 +131,26 @@ class TestOperatorConfigFromEnv:
         cfg = OperatorConfig.from_env()
 
         assert cfg.allowed_users == ["@a:x.com", "@b:x.com", "@c:x.com"]
+
+    @pytest.mark.parametrize("value", ["true", "TRUE", "True", "yes", "YES", "1"])
+    def test_echo_mode_true_variants(self, monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("ECHO_MODE", value)
+
+        cfg = OperatorConfig.from_env()
+
+        assert cfg.echo_mode is True
+
+    @pytest.mark.parametrize("value", ["false", "FALSE", "0", "no", "nope", ""])
+    def test_echo_mode_false_variants(self, monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("ECHO_MODE", value)
+
+        cfg = OperatorConfig.from_env()
+
+        assert cfg.echo_mode is False
 
     def test_frozen(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _clear_env(monkeypatch)

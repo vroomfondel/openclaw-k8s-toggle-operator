@@ -19,6 +19,7 @@ async def _async_main() -> None:
         ["version", __version__],
         ["github", "https://github.com/vroomfondel/openclaw-k8s-toggle-operator"],
         ["pypi", "https://pypi.org/project/openclaw-k8s-toggle-operator"],
+        ["Docker Hub", "https://hub.docker.com/r/xomoxcc/openclaw-k8s-toggle-operator"],
     ]
     table_str = tabulate(startup_rows, tablefmt="mixed_grid")
     lines = table_str.split("\n")

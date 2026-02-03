@@ -55,6 +55,7 @@ room invitations from allowed users.
 | `DEPLOYMENT_NAME` | no | `clawdbot` |
 | `DEPLOYMENT_NAMESPACE` | no | `clawdbot` |
 | `CRYPTO_STORE_PATH` | no | `/data/crypto_store` |
+| `ECHO_MODE` | no | `true` (echo user messages with lobster emoji before processing) |
 | `LOGURU_LEVEL` | no | `DEBUG` |
 
 ## Kubernetes Deployment
@@ -126,7 +127,7 @@ spec:
                   name: openclaw-toggle-operator
                   key: matrix-password
             - name: ALLOWED_USERS
-              value: "@henning:matrix.example.com"
+              value: "@henning:matrix.example.com,@openclaw:matrix.example.com"
             # - name: MATRIX_HOMESERVER
             #   value: "http://synapse.matrix.svc.cluster.local:8008"  # default
             # - name: DEPLOYMENT_NAME
@@ -135,6 +136,8 @@ spec:
             #   value: "clawdbot"                                      # default
             # - name: CRYPTO_STORE_PATH
             #   value: "/data/crypto_store"                            # default
+            # - name: ECHO_MODE
+            #   value: "true"                                          # default
           volumeMounts:
             - name: crypto-store
               mountPath: /data/crypto_store

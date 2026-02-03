@@ -169,6 +169,17 @@ class OperatorBot:
             return
 
         logger.info("Command from {} in {}: {}", event.sender, room.room_id, event.body)
+
+        if self.config.echo_mode:
+            try:
+                await self.client.room_send(
+                    room_id=room.room_id,
+                    message_type="m.room.message",
+                    content={"msgtype": "m.text", "body": f"\U0001f99e {event.body}"},
+                )
+            except Exception as exc:
+                logger.error("Failed to send echo ACK: {}", exc)
+
         response = self.handle_command(event.body)
         logger.info("Response: {}", response)
 
