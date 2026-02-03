@@ -231,7 +231,7 @@ class OperatorBot:
 
         self.client.add_event_callback(self.on_message, RoomMessageText)
         self.client.add_event_callback(self.on_megolm_event, MegolmEvent)
-        self.client.add_invite_callback(self.on_invite, InviteMemberEvent)
+        self.client.add_event_callback(self.on_invite, InviteMemberEvent)
 
         logger.info("Running initial sync ...")
         sync_resp = await self.client.sync(timeout=10000)
