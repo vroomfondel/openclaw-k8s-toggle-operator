@@ -120,8 +120,18 @@ class OperatorBot:
 
     async def login(self) -> None:
         """Log in to the Matrix homeserver and upload device keys."""
-        logger.info("Logging in as {} on {}", self.config.matrix_user, self.config.matrix_homeserver)
-        resp = await self.client.login(self.config.matrix_password, device_name="openclaw-toggle-operator")
+        logger.info(
+            "Logging in as {} on {} (method={})",
+            self.config.matrix_user,
+            self.config.matrix_homeserver,
+            self.config.auth_method,
+        )
+
+        if self.config.auth_method == "sso":
+            resp = await self._login_sso()
+        else:
+            resp = await self.client.login(self.config.matrix_password, device_name="openclaw-toggle-operator")
+
         if isinstance(resp, LoginResponse):
             logger.info("Login OK  user_id={}  device_id={}", resp.user_id, resp.device_id)
         else:
@@ -131,6 +141,22 @@ class OperatorBot:
         if self.client.should_upload_keys:
             logger.info("Uploading device keys ...")
             await self.client.keys_upload()
+
+    async def _login_sso(self) -> LoginResponse:
+        """Perform SSO login via Keycloak and return the LoginResponse."""
+        from openclaw_k8s_toggle_operator.sso_login import SSOLoginError, SSOLoginHandler
+
+        handler = SSOLoginHandler(
+            homeserver=self.config.matrix_homeserver,
+            idp_id=self.config.sso_idp_id,
+            username=self.config.matrix_user,
+            password=self.config.matrix_password,
+        )
+        try:
+            return await handler.perform_login(self.client)
+        except SSOLoginError as exc:
+            logger.error("SSO login failed: {}", exc)
+            sys.exit(1)
 
     async def trust_devices_for_user(self, user_id: str) -> None:
         """Auto-trust all devices of a given user (TOFU)."""

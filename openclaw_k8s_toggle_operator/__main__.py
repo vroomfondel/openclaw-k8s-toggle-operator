@@ -106,8 +106,27 @@ async def _async_connectortest() -> int:
 
     client = AsyncClient(cfg.matrix_homeserver, cfg.matrix_user)
     try:
-        glogger.info("Attempting login to {} as {}", cfg.matrix_homeserver, cfg.matrix_user)
-        resp = await client.login(cfg.matrix_password, device_name="connectortest")
+        glogger.info(
+            "Attempting login to {} as {} (method={})", cfg.matrix_homeserver, cfg.matrix_user, cfg.auth_method
+        )
+
+        if cfg.auth_method == "sso":
+            from openclaw_k8s_toggle_operator.sso_login import SSOLoginError, SSOLoginHandler
+
+            handler = SSOLoginHandler(
+                homeserver=cfg.matrix_homeserver,
+                idp_id=cfg.sso_idp_id,
+                username=cfg.matrix_user,
+                password=cfg.matrix_password,
+            )
+            try:
+                resp = await handler.perform_login(client)
+            except SSOLoginError as exc:
+                glogger.error("SSO login failed: {}", exc)
+                return 1
+        else:
+            resp = await client.login(cfg.matrix_password, device_name="connectortest")
+
         if isinstance(resp, LoginResponse):
             glogger.info("Login successful (device_id={})", resp.device_id)
             return 0

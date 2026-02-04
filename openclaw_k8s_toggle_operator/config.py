@@ -26,6 +26,8 @@ class OperatorConfig:
     deployment_namespace: str
     crypto_store_path: str
     echo_mode: bool
+    auth_method: str
+    sso_idp_id: str
 
     @classmethod
     def from_env(cls) -> OperatorConfig:
@@ -74,6 +76,10 @@ class OperatorConfig:
         if not allowed_users:
             raise ValueError("ALLOWED_USERS environment variable is required and must contain at least one user ID")
 
+        auth_method = os.environ.get("AUTH_METHOD", "password").strip().lower()
+        if auth_method not in ("password", "sso"):
+            raise ValueError(f"AUTH_METHOD must be 'password' or 'sso', got '{auth_method}'")
+
         return cls(
             matrix_homeserver=os.environ.get(
                 "MATRIX_HOMESERVER", "http://synapse.matrix.svc.cluster.local:8008"
@@ -85,4 +91,6 @@ class OperatorConfig:
             deployment_namespace=os.environ.get("DEPLOYMENT_NAMESPACE", "clawdbot").strip(),
             crypto_store_path=os.environ.get("CRYPTO_STORE_PATH", "/data/crypto_store").strip(),
             echo_mode=_parse_bool(os.environ.get("ECHO_MODE", "true")),
+            auth_method=auth_method,
+            sso_idp_id=os.environ.get("SSO_IDP_ID", "keycloak").strip(),
         )

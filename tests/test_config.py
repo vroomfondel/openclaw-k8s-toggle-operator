@@ -16,6 +16,8 @@ _ALL_ENV_VARS = [
     "DEPLOYMENT_NAMESPACE",
     "CRYPTO_STORE_PATH",
     "ECHO_MODE",
+    "AUTH_METHOD",
+    "SSO_IDP_ID",
 ]
 
 
@@ -49,6 +51,8 @@ class TestOperatorConfigFromEnv:
         assert cfg.deployment_namespace == "clawdbot"
         assert cfg.crypto_store_path == "/data/crypto_store"
         assert cfg.echo_mode is True
+        assert cfg.auth_method == "password"
+        assert cfg.sso_idp_id == "keycloak"
 
     def test_custom_values(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _clear_env(monkeypatch)
@@ -160,3 +164,40 @@ class TestOperatorConfigFromEnv:
 
         with pytest.raises(dataclasses.FrozenInstanceError):
             cfg.matrix_user = "nope"  # type: ignore[misc]
+
+    def test_auth_method_sso(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("AUTH_METHOD", "sso")
+
+        cfg = OperatorConfig.from_env()
+
+        assert cfg.auth_method == "sso"
+        assert cfg.sso_idp_id == "keycloak"
+
+    def test_auth_method_invalid_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("AUTH_METHOD", "oauth2")
+
+        with pytest.raises(ValueError, match="AUTH_METHOD"):
+            OperatorConfig.from_env()
+
+    def test_custom_sso_idp_id(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("AUTH_METHOD", "sso")
+        monkeypatch.setenv("SSO_IDP_ID", "  my-idp  ")
+
+        cfg = OperatorConfig.from_env()
+
+        assert cfg.sso_idp_id == "my-idp"
+
+    def test_auth_method_case_insensitive(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("AUTH_METHOD", "  SSO  ")
+
+        cfg = OperatorConfig.from_env()
+
+        assert cfg.auth_method == "sso"
