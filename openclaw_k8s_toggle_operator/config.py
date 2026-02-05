@@ -28,6 +28,11 @@ class OperatorConfig:
     echo_mode: bool
     auth_method: str
     sso_idp_id: str
+    keycloak_url: str
+    keycloak_realm: str
+    keycloak_client_id: str
+    keycloak_client_secret: str
+    jwt_login_type: str
 
     @classmethod
     def from_env(cls) -> OperatorConfig:
@@ -77,8 +82,29 @@ class OperatorConfig:
             raise ValueError("ALLOWED_USERS environment variable is required and must contain at least one user ID")
 
         auth_method = os.environ.get("AUTH_METHOD", "password").strip().lower()
-        if auth_method not in ("password", "sso"):
-            raise ValueError(f"AUTH_METHOD must be 'password' or 'sso', got '{auth_method}'")
+        if auth_method not in ("password", "sso", "jwt"):
+            raise ValueError(f"AUTH_METHOD must be 'password', 'sso', or 'jwt', got '{auth_method}'")
+
+        keycloak_url = ""
+        keycloak_realm = ""
+        keycloak_client_id = ""
+        keycloak_client_secret = ""
+        jwt_login_type = ""
+        if auth_method == "jwt":
+            keycloak_url = os.environ.get("KEYCLOAK_URL", "").strip()
+            if not keycloak_url:
+                raise ValueError("KEYCLOAK_URL environment variable is required when AUTH_METHOD=jwt")
+            keycloak_realm = os.environ.get("KEYCLOAK_REALM", "").strip()
+            if not keycloak_realm:
+                raise ValueError("KEYCLOAK_REALM environment variable is required when AUTH_METHOD=jwt")
+            keycloak_client_id = os.environ.get("KEYCLOAK_CLIENT_ID", "").strip()
+            if not keycloak_client_id:
+                raise ValueError("KEYCLOAK_CLIENT_ID environment variable is required when AUTH_METHOD=jwt")
+            keycloak_client_secret = os.environ.get("KEYCLOAK_CLIENT_SECRET", "").strip()
+            jwt_login_type = os.environ.get("JWT_LOGIN_TYPE", "com.famedly.login.token.oauth").strip()
+            valid_login_types = ("com.famedly.login.token.oauth", "com.famedly.login.token", "org.matrix.login.jwt")
+            if jwt_login_type not in valid_login_types:
+                raise ValueError(f"JWT_LOGIN_TYPE must be one of {valid_login_types}, got '{jwt_login_type}'")
 
         return cls(
             matrix_homeserver=os.environ.get(
@@ -93,4 +119,9 @@ class OperatorConfig:
             echo_mode=_parse_bool(os.environ.get("ECHO_MODE", "true")),
             auth_method=auth_method,
             sso_idp_id=os.environ.get("SSO_IDP_ID", "keycloak").strip(),
+            keycloak_url=keycloak_url,
+            keycloak_realm=keycloak_realm,
+            keycloak_client_id=keycloak_client_id,
+            keycloak_client_secret=keycloak_client_secret,
+            jwt_login_type=jwt_login_type,
         )

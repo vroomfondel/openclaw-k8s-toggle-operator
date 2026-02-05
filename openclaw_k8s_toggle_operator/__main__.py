@@ -8,6 +8,7 @@ from tabulate import tabulate
 
 from openclaw_k8s_toggle_operator import __version__, configure_logging
 from openclaw_k8s_toggle_operator.config import OperatorConfig
+from openclaw_k8s_toggle_operator.matrix_client import MatrixClientHandler
 from openclaw_k8s_toggle_operator.operator import OperatorBot
 
 configure_logging()
@@ -96,48 +97,49 @@ async def _async_connectortest() -> int:
 
     Returns 0 on success, 1 on failure.
     """
+    import tempfile
+
     try:
         cfg = OperatorConfig.from_env()
     except ValueError as exc:
         glogger.error("Configuration error: {}", exc)
         return 1
 
-    from nio import AsyncClient, LoginResponse
-
-    client = AsyncClient(cfg.matrix_homeserver, cfg.matrix_user)
-    try:
-        glogger.info(
-            "Attempting login to {} as {} (method={})", cfg.matrix_homeserver, cfg.matrix_user, cfg.auth_method
+    # Use a temporary directory for crypto store in connector test
+    with tempfile.TemporaryDirectory() as tmp_crypto_store:
+        handler = MatrixClientHandler(
+            homeserver=cfg.matrix_homeserver,
+            user=cfg.matrix_user,
+            crypto_store_path=tmp_crypto_store,
         )
-
-        if cfg.auth_method == "sso":
-            from openclaw_k8s_toggle_operator.sso_login import SSOLoginError, SSOLoginHandler
-
-            handler = SSOLoginHandler(
-                homeserver=cfg.matrix_homeserver,
-                idp_id=cfg.sso_idp_id,
-                username=cfg.matrix_user,
-                password=cfg.matrix_password,
+        try:
+            glogger.info(
+                "Attempting login to {} as {} (method={})",
+                cfg.matrix_homeserver,
+                cfg.matrix_user,
+                cfg.auth_method,
             )
-            try:
-                resp = await handler.perform_login(client)
-            except SSOLoginError as exc:
-                glogger.error("SSO login failed: {}", exc)
-                return 1
-        else:
-            resp = await client.login(cfg.matrix_password, device_name="connectortest")
 
-        if isinstance(resp, LoginResponse):
-            glogger.info("Login successful (device_id={})", resp.device_id)
+            await handler.login(
+                auth_method=cfg.auth_method,
+                password=cfg.matrix_password,
+                sso_idp_id=cfg.sso_idp_id,
+                keycloak_url=cfg.keycloak_url,
+                keycloak_realm=cfg.keycloak_realm,
+                keycloak_client_id=cfg.keycloak_client_id,
+                keycloak_client_secret=cfg.keycloak_client_secret,
+                jwt_login_type=cfg.jwt_login_type,
+            )
+            glogger.info("Login successful (user_id={})", handler.user_id)
             return 0
-        else:
-            glogger.error("Login failed: {}", resp)
+        except SystemExit:
+            # login() calls sys.exit(1) on failure
             return 1
-    except Exception as exc:
-        glogger.error("Connection error: {}", exc)
-        return 1
-    finally:
-        await client.close()
+        except Exception as exc:
+            glogger.error("Connection error: {}", exc)
+            return 1
+        finally:
+            await handler.close()
 
 
 def connectortest() -> None:

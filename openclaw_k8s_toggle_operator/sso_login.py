@@ -2,6 +2,17 @@
 
 Programmatically simulates the browser-based SSO redirect chain:
 Synapse -> Keycloak login form -> credential submission -> Synapse OIDC callback -> login token.
+
+.. warning::
+    **DISCOURAGED** — This module relies on HTML parsing of Keycloak's login form,
+    which is inherently fragile and may break with Keycloak upgrades or theme changes.
+
+    **Prefer JWT authentication instead** (``AUTH_METHOD=jwt``), which uses the stable
+    Keycloak ROPC token endpoint and synapse-token-authenticator for Matrix login.
+    See the README for setup instructions.
+
+    This SSO module exists for edge cases where JWT auth is not available, but should
+    be considered a last resort.
 """
 
 from __future__ import annotations

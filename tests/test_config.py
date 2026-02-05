@@ -18,6 +18,11 @@ _ALL_ENV_VARS = [
     "ECHO_MODE",
     "AUTH_METHOD",
     "SSO_IDP_ID",
+    "KEYCLOAK_URL",
+    "KEYCLOAK_REALM",
+    "KEYCLOAK_CLIENT_ID",
+    "KEYCLOAK_CLIENT_SECRET",
+    "JWT_LOGIN_TYPE",
 ]
 
 
@@ -53,6 +58,11 @@ class TestOperatorConfigFromEnv:
         assert cfg.echo_mode is True
         assert cfg.auth_method == "password"
         assert cfg.sso_idp_id == "keycloak"
+        assert cfg.keycloak_url == ""
+        assert cfg.keycloak_realm == ""
+        assert cfg.keycloak_client_id == ""
+        assert cfg.keycloak_client_secret == ""
+        assert cfg.jwt_login_type == ""
 
     def test_custom_values(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _clear_env(monkeypatch)
@@ -201,3 +211,120 @@ class TestOperatorConfigFromEnv:
         cfg = OperatorConfig.from_env()
 
         assert cfg.auth_method == "sso"
+
+    def test_auth_method_jwt_with_required_fields(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("AUTH_METHOD", "jwt")
+        monkeypatch.setenv("KEYCLOAK_URL", "https://keycloak.example.com")
+        monkeypatch.setenv("KEYCLOAK_REALM", "master")
+        monkeypatch.setenv("KEYCLOAK_CLIENT_ID", "clawdbot-operator")
+        monkeypatch.setenv("KEYCLOAK_CLIENT_SECRET", "my-secret")
+
+        cfg = OperatorConfig.from_env()
+
+        assert cfg.auth_method == "jwt"
+        assert cfg.keycloak_url == "https://keycloak.example.com"
+        assert cfg.keycloak_realm == "master"
+        assert cfg.keycloak_client_id == "clawdbot-operator"
+        assert cfg.keycloak_client_secret == "my-secret"
+        assert cfg.jwt_login_type == "com.famedly.login.token.oauth"
+
+    def test_auth_method_jwt_public_client(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("AUTH_METHOD", "jwt")
+        monkeypatch.setenv("KEYCLOAK_URL", "https://keycloak.example.com")
+        monkeypatch.setenv("KEYCLOAK_REALM", "master")
+        monkeypatch.setenv("KEYCLOAK_CLIENT_ID", "clawdbot-operator")
+
+        cfg = OperatorConfig.from_env()
+
+        assert cfg.keycloak_client_secret == ""
+
+    def test_auth_method_jwt_missing_keycloak_url_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("AUTH_METHOD", "jwt")
+        monkeypatch.setenv("KEYCLOAK_REALM", "master")
+        monkeypatch.setenv("KEYCLOAK_CLIENT_ID", "clawdbot-operator")
+
+        with pytest.raises(ValueError, match="KEYCLOAK_URL"):
+            OperatorConfig.from_env()
+
+    def test_auth_method_jwt_missing_keycloak_realm_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("AUTH_METHOD", "jwt")
+        monkeypatch.setenv("KEYCLOAK_URL", "https://keycloak.example.com")
+        monkeypatch.setenv("KEYCLOAK_CLIENT_ID", "clawdbot-operator")
+
+        with pytest.raises(ValueError, match="KEYCLOAK_REALM"):
+            OperatorConfig.from_env()
+
+    def test_auth_method_jwt_missing_keycloak_client_id_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("AUTH_METHOD", "jwt")
+        monkeypatch.setenv("KEYCLOAK_URL", "https://keycloak.example.com")
+        monkeypatch.setenv("KEYCLOAK_REALM", "master")
+
+        with pytest.raises(ValueError, match="KEYCLOAK_CLIENT_ID"):
+            OperatorConfig.from_env()
+
+    def test_auth_method_password_ignores_keycloak_vars(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("AUTH_METHOD", "password")
+        monkeypatch.setenv("KEYCLOAK_URL", "https://keycloak.example.com")
+        monkeypatch.setenv("KEYCLOAK_REALM", "master")
+        monkeypatch.setenv("KEYCLOAK_CLIENT_ID", "clawdbot-operator")
+
+        cfg = OperatorConfig.from_env()
+
+        assert cfg.auth_method == "password"
+        assert cfg.keycloak_url == ""
+        assert cfg.keycloak_realm == ""
+        assert cfg.keycloak_client_id == ""
+        assert cfg.keycloak_client_secret == ""
+        assert cfg.jwt_login_type == ""
+
+    def test_jwt_login_type_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """JWT_LOGIN_TYPE defaults to com.famedly.login.token.oauth when AUTH_METHOD=jwt."""
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("AUTH_METHOD", "jwt")
+        monkeypatch.setenv("KEYCLOAK_URL", "https://keycloak.example.com")
+        monkeypatch.setenv("KEYCLOAK_REALM", "master")
+        monkeypatch.setenv("KEYCLOAK_CLIENT_ID", "clawdbot-operator")
+
+        cfg = OperatorConfig.from_env()
+
+        assert cfg.jwt_login_type == "com.famedly.login.token.oauth"
+
+    def test_jwt_login_type_native_jwt(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """JWT_LOGIN_TYPE accepts org.matrix.login.jwt."""
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("AUTH_METHOD", "jwt")
+        monkeypatch.setenv("KEYCLOAK_URL", "https://keycloak.example.com")
+        monkeypatch.setenv("KEYCLOAK_REALM", "master")
+        monkeypatch.setenv("KEYCLOAK_CLIENT_ID", "clawdbot-operator")
+        monkeypatch.setenv("JWT_LOGIN_TYPE", "org.matrix.login.jwt")
+
+        cfg = OperatorConfig.from_env()
+
+        assert cfg.jwt_login_type == "org.matrix.login.jwt"
+
+    def test_jwt_login_type_invalid_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """JWT_LOGIN_TYPE rejects invalid values."""
+        _clear_env(monkeypatch)
+        _set_required(monkeypatch)
+        monkeypatch.setenv("AUTH_METHOD", "jwt")
+        monkeypatch.setenv("KEYCLOAK_URL", "https://keycloak.example.com")
+        monkeypatch.setenv("KEYCLOAK_REALM", "master")
+        monkeypatch.setenv("KEYCLOAK_CLIENT_ID", "clawdbot-operator")
+        monkeypatch.setenv("JWT_LOGIN_TYPE", "invalid_type")
+
+        with pytest.raises(ValueError, match="JWT_LOGIN_TYPE"):
+            OperatorConfig.from_env()

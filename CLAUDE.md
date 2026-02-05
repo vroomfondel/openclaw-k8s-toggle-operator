@@ -52,7 +52,10 @@ pytest tests/test_config.py::TestClassName::test_method_name
 
 - **`__init__.py`** — Version, loguru `configure_logging()` helper
 - **`config.py`** — Frozen `OperatorConfig` dataclass with `from_env()` classmethod; reads Matrix credentials, allowed users, deployment target, and crypto store path from environment variables
-- **`operator.py`** — `OperatorBot` class handling Matrix login, E2E encryption (TOFU device trust), command parsing, and K8s deployment scaling via `AppsV1Api.patch_namespaced_deployment_scale()`
+- **`matrix_client.py`** — `MatrixClientHandler` class encapsulating Matrix client operations with E2E encryption, TOFU device trust, and multiple authentication methods (password, SSO, JWT)
+- **`operator.py`** — `OperatorBot` class handling command parsing and K8s deployment scaling via `AppsV1Api.patch_namespaced_deployment_scale()`; uses `MatrixClientHandler` for Matrix operations
+- **`sso_login.py`** — `SSOLoginHandler` for SSO authentication via Keycloak OAuth flow (discouraged, prefer JWT)
+- **`jwt_login.py`** — `JWTLoginHandler` for JWT authentication via Keycloak ROPC grant
 - **`__main__.py`** — Signal setup, loads config, initialises operator, runs the main async loop with auto-reconnect and exponential backoff; also provides `connectortest()` CLI for Matrix connectivity checks
 
 ### Environment Variables
@@ -67,6 +70,16 @@ pytest tests/test_config.py::TestClassName::test_method_name
 | `DEPLOYMENT_NAMESPACE` | no | `clawdbot` |
 | `CRYPTO_STORE_PATH` | no | `/data/crypto_store` |
 | `ECHO_MODE` | no | `true` (echo user messages with lobster emoji before processing) |
+
+#### JWT Authentication Variables (for `AUTH_METHOD=jwt`)
+
+| Variable | Required | Default |
+|----------|----------|---------|
+| `KEYCLOAK_URL` | **yes** | — |
+| `KEYCLOAK_REALM` | **yes** | — |
+| `KEYCLOAK_CLIENT_ID` | **yes** | — |
+| `KEYCLOAK_CLIENT_SECRET` | no | `""` (empty for public clients) |
+| `JWT_LOGIN_TYPE` | no | `com.famedly.login.token.oauth` (alt: `com.famedly.login.token`, `org.matrix.login.jwt`) |
 
 ### Bot Commands
 
@@ -103,6 +116,79 @@ matrix-nio requires all recipient devices to be verified before `room_send` will
 - Trusting only at startup or only the sender is insufficient. Encrypted `room_send` must encrypt for *all* devices of *all* room members. New devices appear in the device store during ongoing syncs and must be verified before the next send, otherwise matrix-nio raises `"Device X for user Y is not verified or blacklisted"`.
 - `keys_query()` only queries users in `olm.users_for_key_query`. When that set is empty (no pending queries from sync), it raises `LocalProtocolError` and the device store stays stale. Fix: always add the user to `olm.users_for_key_query` before calling `keys_query()`.
 - All `room_send()` calls use `ignore_unverified_devices=True` as a safety net against race conditions where a device appears between the trust loop and the send. Ignored devices still receive encryption keys — they just aren't formally verified. Do not remove this flag.
+
+### JWT Authentication
+
+When `AUTH_METHOD=jwt` is set, the operator authenticates via Keycloak ROPC instead of password login. Three login types are supported:
+
+| Login Type | Synapse Module | Key Management |
+|------------|----------------|----------------|
+| `com.famedly.login.token.oauth` (default) | synapse-token-authenticator oauth: | JWKS endpoint (automatic) |
+| `com.famedly.login.token` | synapse-token-authenticator jwt: | Symmetric secret (HS512) |
+| `org.matrix.login.jwt` | Built-in | Public key (manual) |
+
+#### Authentication Flow
+
+1. Bot sends username/password to Keycloak via ROPC (Resource Owner Password Credentials) grant
+2. Keycloak returns a JWT access token
+3. Bot sends JWT to Synapse via the configured login type
+4. Synapse validates JWT and logs in the user
+
+#### Keycloak Requirements
+
+Create a **confidential client** with ROPC enabled:
+- `publicClient: false` — confidential client requires client secret
+- `directAccessGrantsEnabled: true` — enables ROPC grant type
+- `clientAuthenticatorType: client-secret`
+- `standardFlowEnabled: false` (optional, bot doesn't use browser flows)
+
+Get the realm public key (for native JWT):
+```bash
+curl -s "https://keycloak.example.com/realms/<realm>" | jq -r '.public_key'
+```
+
+#### Native Synapse JWT Setup
+
+For `JWT_LOGIN_TYPE=org.matrix.login.jwt`, configure `homeserver.yaml`:
+
+```yaml
+jwt_config:
+  enabled: true
+  secret: |
+    -----BEGIN PUBLIC KEY-----
+    <Keycloak realm public key>
+    -----END PUBLIC KEY-----
+  algorithm: "RS256"
+  subject_claim: "preferred_username"
+  issuer: "https://keycloak.example.com/realms/<realm>"
+```
+
+#### synapse-token-authenticator Setup
+
+For `JWT_LOGIN_TYPE=com.famedly.login.token.oauth` (default), install synapse-token-authenticator and configure `homeserver.yaml`:
+
+```yaml
+modules:
+  - module: synapse_token_authenticator.TokenAuthenticator
+    config:
+      oauth:
+        jwt_validation:
+          jwks_endpoint: "https://keycloak.example.com/realms/<realm>/protocol/openid-connect/certs"
+          localpart_path: "preferred_username"
+          require_expiry: true
+          validator:
+            type: exist
+        username_type: "localpart"
+```
+
+#### Comparison
+
+| Feature | Native JWT | synapse-token-authenticator |
+|---------|------------|----------------------------|
+| Key management | Manual (copy public key) | Automatic (JWKS endpoint) |
+| Key rotation | Manual update required | Automatic |
+| Token revocation | Not supported | Introspection mode available |
+| Setup complexity | Simpler | Requires module installation |
 
 ## Code Style
 

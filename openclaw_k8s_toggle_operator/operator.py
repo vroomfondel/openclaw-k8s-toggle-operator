@@ -7,25 +7,15 @@ replicas.
 
 from __future__ import annotations
 
-import os
-import sys
 from typing import Any
 
 from kubernetes import client as k8s_client
 from kubernetes import config as k8s_config
 from loguru import logger as glogger
-from nio import (
-    AsyncClient,
-    AsyncClientConfig,
-    InviteMemberEvent,
-    LocalProtocolError,
-    LoginResponse,
-    MegolmEvent,
-    RoomMessageText,
-    SyncResponse,
-)
+from nio import InviteMemberEvent, MegolmEvent, RoomMessageText
 
 from openclaw_k8s_toggle_operator.config import OperatorConfig
+from openclaw_k8s_toggle_operator.matrix_client import MatrixClientHandler
 
 logger = glogger.bind(classname="OperatorBot")
 
@@ -36,10 +26,10 @@ logger = glogger.bind(classname="OperatorBot")
 HELP_TEXT = "\n".join(
     [
         "Clawdbot Operator commands:",
-        "  start / on  \u2014 Scale deployment to 1 replica",
-        "  stop / off  \u2014 Scale deployment to 0 replicas",
-        "  status      \u2014 Show deployment status",
-        "  help        \u2014 Show this message",
+        "  start / on  — Scale deployment to 1 replica",
+        "  stop / off  — Scale deployment to 0 replicas",
+        "  status      — Show deployment status",
+        "  help        — Show this message",
     ]
 )
 
@@ -49,24 +39,18 @@ class OperatorBot:
 
     def __init__(self, config: OperatorConfig) -> None:
         self.config = config
+        self.startup_sync_done = False
 
         # Kubernetes client
         k8s_config.load_incluster_config()
         self._apps_v1 = k8s_client.AppsV1Api()
 
-        # Matrix client with E2E encryption
-        os.makedirs(config.crypto_store_path, exist_ok=True)
-        nio_config = AsyncClientConfig(
-            encryption_enabled=True,
-            store_sync_tokens=True,
+        # Matrix client handler
+        self._matrix = MatrixClientHandler(
+            homeserver=config.matrix_homeserver,
+            user=config.matrix_user,
+            crypto_store_path=config.crypto_store_path,
         )
-        self.client = AsyncClient(
-            config.matrix_homeserver,
-            config.matrix_user,
-            store_path=config.crypto_store_path,
-            config=nio_config,
-        )
-        self.startup_sync_done = False
 
     # -- Kubernetes helpers --------------------------------------------------
 
@@ -116,79 +100,6 @@ class OperatorBot:
             logger.error("Command error: {}", exc)
             return f"Error: {exc}"
 
-    # -- Matrix login & device trust -----------------------------------------
-
-    async def login(self) -> None:
-        """Log in to the Matrix homeserver and upload device keys."""
-        logger.info(
-            "Logging in as {} on {} (method={})",
-            self.config.matrix_user,
-            self.config.matrix_homeserver,
-            self.config.auth_method,
-        )
-
-        if self.config.auth_method == "sso":
-            resp = await self._login_sso()
-        else:
-            resp = await self.client.login(self.config.matrix_password, device_name="openclaw-toggle-operator")
-
-        if isinstance(resp, LoginResponse):
-            logger.info("Login OK  user_id={}  device_id={}", resp.user_id, resp.device_id)
-        else:
-            logger.error("Login failed: {}", resp)
-            sys.exit(1)
-
-        if self.client.should_upload_keys:
-            logger.info("Uploading device keys ...")
-            await self.client.keys_upload()
-
-    async def _login_sso(self) -> LoginResponse:
-        """Perform SSO login via Keycloak and return the LoginResponse."""
-        from openclaw_k8s_toggle_operator.sso_login import SSOLoginError, SSOLoginHandler
-
-        handler = SSOLoginHandler(
-            homeserver=self.config.matrix_homeserver,
-            idp_id=self.config.sso_idp_id,
-            username=self.config.matrix_user,
-            password=self.config.matrix_password,
-        )
-        try:
-            return await handler.perform_login(self.client)
-        except SSOLoginError as exc:
-            logger.error("SSO login failed: {}", exc)
-            sys.exit(1)
-
-    async def trust_devices_for_user(self, user_id: str) -> None:
-        """Auto-trust all devices of a given user (TOFU)."""
-        if self.client.olm:
-            self.client.olm.users_for_key_query.add(user_id)
-        try:
-            await self.client.keys_query()
-        except LocalProtocolError:
-            logger.debug("No key query required for {} — using existing device store", user_id)
-        device_store = self.client.device_store
-        if user_id not in device_store:
-            return
-        for device_id, olm_device in device_store[user_id].items():
-            if not self.client.is_device_verified(olm_device):
-                logger.info("Trusting device {} of {}", device_id, user_id)
-                self.client.verify_device(olm_device)
-
-    async def trust_all_allowed_devices(self) -> None:
-        """Trust devices of all allowed users."""
-        for user_id in self.config.allowed_users:
-            await self.trust_devices_for_user(user_id)
-
-    async def trust_devices_in_room(self, room_id: str) -> None:
-        """Trust all devices of all members in a room (TOFU)."""
-        room = self.client.rooms.get(room_id)
-        if not room:
-            return
-        for user_id in room.users:
-            if user_id == self.client.user_id:
-                continue
-            await self.trust_devices_for_user(user_id)
-
     # -- Matrix event callbacks ----------------------------------------------
 
     async def on_invite(self, room: Any, event: Any) -> None:
@@ -198,12 +109,12 @@ class OperatorBot:
             logger.warning("Ignoring invite from {} to {}", sender, room.room_id)
             return
         logger.info("Accepting invite from {} to {}", sender, room.room_id)
-        await self.client.join(room.room_id)
-        await self.trust_devices_for_user(sender)
+        await self._matrix.join_room(room.room_id)
+        await self._matrix.trust_devices_for_user(sender)
 
     async def on_message(self, room: Any, event: Any) -> None:
         """Process text messages from allowed users as commands."""
-        if event.sender == self.client.user_id:
+        if event.sender == self._matrix.user_id:
             return
         if not self.startup_sync_done:
             return
@@ -212,37 +123,21 @@ class OperatorBot:
 
         logger.info("Command from {} in {}: {}", event.sender, room.room_id, event.body)
 
-        await self.trust_devices_in_room(room.room_id)
+        await self._matrix.trust_devices_in_room(room.room_id)
 
         if self.config.echo_mode:
-            try:
-                await self.client.room_send(
-                    room_id=room.room_id,
-                    message_type="m.room.message",
-                    content={"msgtype": "m.text", "body": f"\U0001f99e {event.body}"},
-                    ignore_unverified_devices=True,
-                )
-            except Exception as exc:
-                logger.error("Failed to send echo ACK: {}", exc)
+            await self._matrix.send_message(room.room_id, f"\U0001f99e {event.body}")
 
         response = self.handle_command(event.body)
         logger.info("Response: {}", response)
 
-        try:
-            await self.client.room_send(
-                room_id=room.room_id,
-                message_type="m.room.message",
-                content={"msgtype": "m.text", "body": response},
-                ignore_unverified_devices=True,
-            )
-        except Exception as exc:
-            logger.error("Failed to send response: {}", exc)
+        await self._matrix.send_message(room.room_id, response)
 
     async def on_megolm_event(self, room: Any, event: Any) -> None:
         """Handle encrypted messages we could not decrypt (missing session)."""
         if not self.startup_sync_done:
             return
-        if event.sender == self.client.user_id:
+        if event.sender == self._matrix.user_id:
             return
 
         logger.warning(
@@ -251,47 +146,38 @@ class OperatorBot:
             room.room_id,
             event.session_id,
         )
-        await self.trust_devices_in_room(room.room_id)
+        await self._matrix.trust_devices_in_room(room.room_id)
 
-        try:
-            await self.client.room_send(
-                room_id=room.room_id,
-                message_type="m.room.message",
-                content={
-                    "msgtype": "m.text",
-                    "body": (
-                        "I could not decrypt your message. "
-                        "This may happen after a restart. "
-                        "Please send your command again."
-                    ),
-                },
-                ignore_unverified_devices=True,
-            )
-        except Exception as exc:
-            logger.warning("Failed to send decryption warning: {}", exc)
+        await self._matrix.send_message(
+            room.room_id,
+            "I could not decrypt your message. " "This may happen after a restart. " "Please send your command again.",
+        )
 
     # -- Main loop -----------------------------------------------------------
 
     async def run(self) -> None:
         """Log in, register callbacks, and run the sync loop."""
-        await self.login()
+        await self._matrix.login(
+            auth_method=self.config.auth_method,
+            password=self.config.matrix_password,
+            sso_idp_id=self.config.sso_idp_id,
+            keycloak_url=self.config.keycloak_url,
+            keycloak_realm=self.config.keycloak_realm,
+            keycloak_client_id=self.config.keycloak_client_id,
+            keycloak_client_secret=self.config.keycloak_client_secret,
+            jwt_login_type=self.config.jwt_login_type,
+        )
 
-        self.client.add_event_callback(self.on_message, RoomMessageText)
-        self.client.add_event_callback(self.on_megolm_event, MegolmEvent)
-        self.client.add_event_callback(self.on_invite, InviteMemberEvent)
+        self._matrix.add_event_callback(self.on_message, RoomMessageText)
+        self._matrix.add_event_callback(self.on_megolm_event, MegolmEvent)
+        self._matrix.add_event_callback(self.on_invite, InviteMemberEvent)
 
-        logger.info("Running initial sync ...")
-        sync_resp = await self.client.sync(timeout=10000)
-        if isinstance(sync_resp, SyncResponse):
-            self.client.next_batch = sync_resp.next_batch
-
-        await self.trust_all_allowed_devices()
+        await self._matrix.initial_sync()
+        await self._matrix.trust_all_allowed_devices(self.config.allowed_users)
 
         self.startup_sync_done = True
-        logger.info("Initial sync complete.  Listening for commands ...")
-
-        await self.client.sync_forever(timeout=30000)
+        await self._matrix.sync_forever()
 
     async def close(self) -> None:
         """Close the Matrix client connection."""
-        await self.client.close()
+        await self._matrix.close()
