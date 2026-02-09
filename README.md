@@ -70,26 +70,18 @@ See [HOWTO_MATRIX_KEYCLOAK_OAUTH.md](https://github.com/vroomfondel/openclaw-k8s
 
 ### Authentication Flow
 
-```
-Bot/Service                    Keycloak                         Synapse
-    │                              │                                │
-    │  1. ROPC grant               │                                │
-    │  (username + password)       │                                │
-    ├─────────────────────────────►│                                │
-    │                              │                                │
-    │  2. JWT access token         │                                │
-    │◄─────────────────────────────┤                                │
-    │                              │                                │
-    │  3. Matrix login (JWT)       │                                │
-    ├──────────────────────────────┼───────────────────────────────►│
-    │                              │                                │
-    │                              │  4. Validate JWT               │
-    │                              │◄───────────────────────────────┤
-    │                              │     (JWKS or introspection)    │
-    │                              ├───────────────────────────────►│
-    │                              │                                │
-    │  5. Matrix access token      │                                │
-    │◄─────────────────────────────┼────────────────────────────────┤
+```mermaid
+sequenceDiagram
+    participant Bot as Bot/Service
+    participant KC as Keycloak
+    participant Syn as Synapse
+
+    Bot->>KC: 1. ROPC grant (username + password)
+    KC-->>Bot: 2. JWT access token
+    Bot->>Syn: 3. Matrix login (JWT)
+    Syn->>KC: 4. Validate JWT (JWKS or introspection)
+    KC-->>Syn: JWT valid
+    Syn-->>Bot: 5. Matrix access token
 ```
 
 ### Supported Login Types

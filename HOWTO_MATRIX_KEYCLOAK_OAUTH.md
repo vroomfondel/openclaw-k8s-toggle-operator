@@ -254,22 +254,18 @@ Logging in as <BOT_USERNAME> on <HOMESERVER> (method=jwt, login_type=com.famedly
 
 ## Authentication Flow
 
-```
-Bot                         Keycloak                      Synapse
- |                             |                             |
- |-- ROPC grant -------------->|                             |
- |   (username + password      |                             |
- |    + client_id/secret)      |                             |
- |                             |                             |
- |<-- JWT access token --------|                             |
- |                             |                             |
- |-- Matrix login ------------------------------------------->|
- |   (type: com.famedly.       |                             |
- |    login.token.oauth,       |    +-- JWKS validation -->  |
- |    token: <JWT>)            |    |   (fetches public key  |
- |                             |    |    from Keycloak JWKS) |
- |                             |    +------------------------+
- |<-- Matrix access token + device_id -----------------------|
+```mermaid
+sequenceDiagram
+    participant Bot
+    participant KC as Keycloak
+    participant Syn as Synapse
+
+    Bot->>KC: ROPC grant (username + password + client_id/secret)
+    KC-->>Bot: JWT access token
+    Bot->>Syn: Matrix login (type: com.famedly.login.token.oauth, token: JWT)
+    Syn->>KC: JWKS validation (fetches public key from Keycloak JWKS)
+    KC-->>Syn: Public key
+    Syn-->>Bot: Matrix access token + device_id
 ```
 
 ---
