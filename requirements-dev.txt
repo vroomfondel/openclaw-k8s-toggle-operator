@@ -9,5 +9,3 @@ mypy==1.19.*
 types-tabulate
 
 pytest==9.0.*
-
-pytesseract
