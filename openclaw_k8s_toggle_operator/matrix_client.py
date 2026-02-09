@@ -103,11 +103,14 @@ class MatrixClientHandler:
         jwt_login_type
             Matrix login type for JWT auth (default: "com.famedly.login.token.oauth").
         """
+        login_info = f"method={auth_method}"
+        if auth_method == "jwt":
+            login_info += f", login_type={jwt_login_type}"
         logger.info(
-            "Logging in as {} on {} (method={})",
+            "Logging in as {} on {} ({})",
             self._user,
             self._homeserver,
-            auth_method,
+            login_info,
         )
 
         if auth_method == "sso":

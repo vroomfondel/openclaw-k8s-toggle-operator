@@ -62,6 +62,8 @@ room invitations from allowed users.
 
 When `AUTH_METHOD=jwt` is set, the operator authenticates via Keycloak ROPC (Resource Owner Password Credentials) grant instead of direct Matrix password login. This enables centralized identity management through Keycloak while allowing non-interactive bot authentication.
 
+See [HOWTO_MATRIX_KEYCLOAK_OAUTH.md](HOWTO_MATRIX_KEYCLOAK_OAUTH.md) for a step-by-step setup guide covering Keycloak client creation, Synapse configuration, and verification.
+
 ### Authentication Flow
 
 ```

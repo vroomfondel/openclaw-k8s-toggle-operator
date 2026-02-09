@@ -20,6 +20,7 @@ deployment between 0 and 1 replicas.
 - Scale a Kubernetes Deployment to 0 or 1 replicas via Matrix chat commands
 - E2E encryption support via matrix-nio with persistent crypto store
 - TOFU device trust for allowed users
+- Multiple auth methods: password, SSO, or JWT via Keycloak (ROPC + JWKS)
 - Clean signal handling (SIGTERM/SIGINT) for graceful container shutdown
 - Auto-reconnect with exponential backoff (max 20 retries)
 - Structured logging via loguru
@@ -52,6 +53,21 @@ docker run --rm xomoxcc/openclaw-k8s-toggle-operator:latest
 | `CRYPTO_STORE_PATH` | Path for E2E encryption crypto store | `/data/crypto_store` |
 | `ECHO_MODE` | Echo user messages with lobster emoji before processing | `true` |
 | `LOGURU_LEVEL` | Log verbosity (`DEBUG`, `INFO`, `WARNING`, ...) | `DEBUG` |
+
+### JWT Authentication (Keycloak)
+
+Set `AUTH_METHOD=jwt` to authenticate via Keycloak ROPC grant instead of direct Matrix password login. The bot obtains a JWT from Keycloak and presents it to Synapse for validation via JWKS.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AUTH_METHOD` | Auth method (`password`, `sso`, or `jwt`) | `password` |
+| `KEYCLOAK_URL` | Keycloak base URL (required if `jwt`) | -- |
+| `KEYCLOAK_REALM` | Keycloak realm name (required if `jwt`) | -- |
+| `KEYCLOAK_CLIENT_ID` | Keycloak client ID (required if `jwt`) | -- |
+| `KEYCLOAK_CLIENT_SECRET` | Keycloak client secret | `""` |
+| `JWT_LOGIN_TYPE` | Matrix login type for JWT auth | `com.famedly.login.token.oauth` |
+
+Requires [synapse-token-authenticator](https://github.com/famedly/synapse-token-authenticator) on the Synapse side. See the [setup guide](https://github.com/vroomfondel/openclaw-k8s-toggle-operator/blob/main/HOWTO_MATRIX_KEYCLOAK_OAUTH.md) for step-by-step instructions.
 
 ## Kubernetes Deployment
 
