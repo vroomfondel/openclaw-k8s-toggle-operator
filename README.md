@@ -18,8 +18,9 @@ Extracted from the inline `clawdbot_operator.py` ConfigMap in the
 
 ## Status
 
-**Beta (v0.0.1)** — the core Matrix bot and K8s scaling loop is implemented.
-The project scaffolding (packaging, Docker image, CI) is in place.
+**Beta (v0.0.10)** — core Matrix bot with E2E encryption, K8s scaling, and
+JWT authentication via Keycloak are implemented. Packaging, Docker multi-arch
+images, and CI are in place.
 
 ## Bot Commands
 
@@ -41,6 +42,7 @@ room invitations from allowed users.
 - Uses the **Kubernetes Python client** with in-cluster config to patch deployment scale
 - Connects to Matrix via **matrix-nio** with E2E encryption (`libolm`)
 - **TOFU device trust** — automatically trusts all devices of allowed users
+- **Multiple auth methods** — password, SSO, or JWT via Keycloak (ROPC + JWKS)
 - Crypto store must be on a **persistent volume** or the bot loses decryption keys on restart
 - Auto-reconnect loop with exponential backoff (max 20 retries)
 
@@ -62,7 +64,7 @@ room invitations from allowed users.
 
 When `AUTH_METHOD=jwt` is set, the operator authenticates via Keycloak ROPC (Resource Owner Password Credentials) grant instead of direct Matrix password login. This enables centralized identity management through Keycloak while allowing non-interactive bot authentication.
 
-See [HOWTO_MATRIX_KEYCLOAK_OAUTH.md](HOWTO_MATRIX_KEYCLOAK_OAUTH.md) for a step-by-step setup guide covering Keycloak client creation, Synapse configuration, and verification.
+See [HOWTO_MATRIX_KEYCLOAK_OAUTH.md](https://github.com/vroomfondel/openclaw-k8s-toggle-operator/blob/main/HOWTO_MATRIX_KEYCLOAK_OAUTH.md) for a step-by-step setup guide covering Keycloak client creation, Synapse configuration, and verification.
 
 ### Authentication Flow
 

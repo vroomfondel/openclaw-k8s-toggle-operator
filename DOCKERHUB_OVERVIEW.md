@@ -51,6 +51,7 @@ docker run --rm xomoxcc/openclaw-k8s-toggle-operator:latest
 | `DEPLOYMENT_NAME` | K8s Deployment to toggle | `clawdbot` |
 | `DEPLOYMENT_NAMESPACE` | Namespace of the target Deployment | `clawdbot` |
 | `CRYPTO_STORE_PATH` | Path for E2E encryption crypto store | `/data/crypto_store` |
+| `AUTH_METHOD` | Auth method (`password`, `sso`, or `jwt`) | `password` |
 | `ECHO_MODE` | Echo user messages with lobster emoji before processing | `true` |
 | `LOGURU_LEVEL` | Log verbosity (`DEBUG`, `INFO`, `WARNING`, ...) | `DEBUG` |
 
