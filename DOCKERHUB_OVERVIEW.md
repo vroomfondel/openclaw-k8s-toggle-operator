@@ -11,6 +11,8 @@ Matrix-controlled Kubernetes deployment toggle operator. Connects to a Matrix
 homeserver with E2E encryption and listens for chat commands to scale a K8s
 deployment between 0 and 1 replicas.
 
+![Operator startup in K9s](https://github.com/vroomfondel/openclaw-k8s-toggle-operator/raw/main/Bildschirmfoto_2026-02-09_11-39-25_blurred.png)
+
 - **Source**: [GitHub](https://github.com/vroomfondel/openclaw-k8s-toggle-operator)
 - **PyPI**: [openclaw-k8s-toggle-operator](https://pypi.org/project/openclaw-k8s-toggle-operator/)
 - **License**: LGPLv3

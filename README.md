@@ -12,6 +12,8 @@ Matrix-controlled Kubernetes deployment toggle operator. Connects to a Matrix
 homeserver with E2E encryption and listens for chat commands to scale a K8s
 deployment between 0 and 1 replicas.
 
+![Operator startup in K9s](Bildschirmfoto_2026-02-09_11-39-25_blurred.png)
+
 Extracted from the inline `clawdbot_operator.py` ConfigMap in the
 [Ansible infrastructure repo](https://github.com/vroomfondel/somestuff)
 (`roles/kubectlstuff/files/clawdbot_operator.py`).
@@ -582,6 +584,51 @@ python -m openclaw_k8s_toggle_operator conntest
 
 Exits 0 on successful login, 1 on failure. Only tests Matrix — does not
 require in-cluster K8s access.
+
+## Scripts
+
+### `scripts/blurimage.py` — OCR-based screenshot redaction
+
+Blurs sensitive text in terminal/K9s screenshots using Tesseract OCR. Designed for redacting secrets, usernames, session IDs, device IDs, and other sensitive information before sharing screenshots.
+
+**Features:**
+- **Multi-pass OCR** with three preprocessing strategies (weighted grayscale, max-channel, blue-channel) to handle colored terminal text on dark backgrounds
+- **OTSU thresholding** for clean black/white separation instead of naive inversion
+- **Upscaling** (default 2x) for better recognition of small monospaced fonts
+- **Two-level matching**: word-level (single tokens) and line-level (multi-word patterns), with targeted blurring that only redacts the matched words, not entire lines
+- **Literal and regex patterns**: `--blur` for case-insensitive literal phrases, `--blur-regex` for case-sensitive regex patterns
+
+**Dependencies:** `tesseract-ocr` (system), `pytesseract` + `opencv-python` (auto-installed)
+
+**Usage:**
+```bash
+# Blur usernames, domain, client secret, session IDs, and device IDs
+python scripts/blurimage.py \
+  --blur matrixadmin henning elasticc.io \
+  --blur-regex "rVFe\S+" "session id \S+" "[A-Z]{8,}" \
+  screenshot.png
+
+# Debug mode — show what Tesseract detects
+python scripts/blurimage.py --debug --blur myuser screenshot.png
+
+# Skip inversion for light-background images
+python scripts/blurimage.py --no-invert --blur myuser screenshot.png
+
+# Higher upscaling for very small text (slower)
+python scripts/blurimage.py --scale 3 --blur myuser screenshot.png
+```
+
+**Pattern types:**
+
+| Argument | Case sensitivity | Description |
+|----------|-----------------|-------------|
+| `--blur` | case-insensitive | Literal phrases, auto-escaped for regex safety |
+| `--blur-regex` | case-sensitive | Raw regex patterns (add `(?i)` in pattern for case-insensitive) |
+| *(hardcoded)* | case-insensitive | `PXL*`, `*.png`, `*.jpg`, `*.mp4`, `*.json` filenames |
+
+See the module docstring in `scripts/blurimage.py` for a detailed explanation of the preprocessing pipeline, multi-pass OCR strategy, and two-level matching approach.
+
+---
 
 ## Development
 
