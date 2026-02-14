@@ -85,7 +85,7 @@ class JWTLoginHandler:
                         if not access_token:
                             raise JWTLoginError("Keycloak response missing access_token")
                         logger.info("JWT access token obtained successfully")
-                        return access_token
+                        return str(access_token)
 
                     if resp.status == 401:
                         raise JWTAuthError("Keycloak authentication failed: invalid credentials")

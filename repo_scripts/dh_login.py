@@ -19,6 +19,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from typing import Any
 
 
 def generate_totp(secret: str, period: int = 30, digits: int = 6) -> str:
@@ -31,13 +32,14 @@ def generate_totp(secret: str, period: int = 30, digits: int = 6) -> str:
     return str(code % (10**digits)).zfill(digits)
 
 
-def post_json(url: str, payload: dict) -> dict:
+def post_json(url: str, payload: dict[str, str]) -> dict[str, Any]:
     """POST JSON and return parsed response."""
     data = json.dumps(payload).encode()
     req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
     try:
         with urllib.request.urlopen(req) as resp:
-            return json.loads(resp.read())
+            result: dict[str, Any] = json.loads(resp.read())
+            return result
     except urllib.error.HTTPError as e:
         body = e.read().decode(errors="replace")
         print(f"ERROR: HTTP {e.code} from {url}: {body}", file=sys.stderr)

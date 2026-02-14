@@ -233,7 +233,8 @@ class TestJWTLoginHandlerPerformLogin:
                 mock_client = AsyncMock()
                 mock_client.login_raw = AsyncMock(return_value=fake_resp)
                 await handler.perform_login(mock_client)
-                return mock_client.login_raw.call_args[0][0]
+                result: dict[str, Any] = mock_client.login_raw.call_args[0][0]
+                return result
 
         login_body = asyncio.run(_run())
         assert login_body["type"] == "com.famedly.login.token.oauth"
@@ -251,7 +252,8 @@ class TestJWTLoginHandlerPerformLogin:
                 mock_client = AsyncMock()
                 mock_client.login_raw = AsyncMock(return_value=fake_resp)
                 await handler.perform_login(mock_client)
-                return mock_client.login_raw.call_args[0][0]
+                result: dict[str, Any] = mock_client.login_raw.call_args[0][0]
+                return result
 
         login_body = asyncio.run(_run())
         assert login_body["type"] == "com.famedly.login.token"
@@ -269,7 +271,8 @@ class TestJWTLoginHandlerPerformLogin:
                 mock_client = AsyncMock()
                 mock_client.login_raw = AsyncMock(return_value=fake_resp)
                 await handler.perform_login(mock_client)
-                return mock_client.login_raw.call_args[0][0]
+                result: dict[str, Any] = mock_client.login_raw.call_args[0][0]
+                return result
 
         login_body = asyncio.run(_run())
         assert login_body["type"] == "org.matrix.login.jwt"

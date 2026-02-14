@@ -24,7 +24,19 @@ repos:
       - id: mypy
         pass_filenames: false
         args: ["."]
-        additional_dependencies: [types-pytz, types-tabulate]
+        additional_dependencies:
+          - types-tabulate
+          - kubernetes
+          - loguru
+          - "matrix-nio[e2e]"
+          - tabulate
+          - aiohttp
+          - pytest
+          # repo_scripts extras
+          - numpy
+          - opencv-python-headless
+          - pytesseract
+          - PyGithub
 
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.0

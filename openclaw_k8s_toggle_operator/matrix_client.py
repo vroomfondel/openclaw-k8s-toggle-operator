@@ -62,12 +62,12 @@ class MatrixClientHandler:
     @property
     def user_id(self) -> str:
         """Return the authenticated user ID (e.g. @user:homeserver.com)."""
-        return self._client.user_id
+        return str(self._client.user_id)
 
     @property
     def rooms(self) -> dict[str, Any]:
         """Return the dict of joined rooms."""
-        return self._client.rooms
+        return dict(self._client.rooms)
 
     # -- Login methods ---------------------------------------------------------
 
@@ -278,7 +278,7 @@ class MatrixClientHandler:
         if isinstance(sync_resp, SyncResponse):
             self._client.next_batch = sync_resp.next_batch
             logger.info("Initial sync complete.")
-            return sync_resp.next_batch
+            return str(sync_resp.next_batch)
         return None
 
     async def sync_forever(self, timeout: int = 30000) -> None:
