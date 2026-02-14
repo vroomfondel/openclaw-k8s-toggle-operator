@@ -1,7 +1,7 @@
 name: Update Clone Badge (Python)
 on:
   schedule:
-    - cron: "0 0,12,18 * * *" # Täglich um Mitternacht
+    - cron: "0 0,12,18 * * *" # 3x täglich (0:00, 12:00, 18:00 UTC)
   workflow_dispatch:      # Manuell startbar
 
 jobs:
@@ -9,11 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       # 1. Python aufsetzen
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: '3.14'
 
@@ -29,4 +29,4 @@ jobs:
           GIST_ID: ${{ secrets.GIST_ID }}
           REPO_TOKEN: ${{ secrets.REPO_PRIV_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: python scripts/update_badge.py
+        run: python repo_scripts/update_badge.py

@@ -579,7 +579,7 @@ require in-cluster K8s access.
 
 ## Scripts
 
-### `scripts/blurimage.py` — OCR-based screenshot redaction
+### `repo_scripts/blurimage.py` — OCR-based screenshot redaction
 
 Blurs sensitive text in terminal/K9s screenshots using Tesseract OCR. Designed for redacting secrets, usernames, session IDs, device IDs, and other sensitive information before sharing screenshots.
 
@@ -595,19 +595,19 @@ Blurs sensitive text in terminal/K9s screenshots using Tesseract OCR. Designed f
 **Usage:**
 ```bash
 # Blur usernames, domain, client secret, session IDs, and device IDs
-python scripts/blurimage.py \
+python repo_scripts/blurimage.py \
   --blur matrixadmin henning elasticc.io \
   --blur-regex "rVFe\S+" "session id \S+" "[A-Z]{8,}" \
   screenshot.png
 
 # Debug mode — show what Tesseract detects
-python scripts/blurimage.py --debug --blur myuser screenshot.png
+python repo_scripts/blurimage.py --debug --blur myuser screenshot.png
 
 # Skip inversion for light-background images
-python scripts/blurimage.py --no-invert --blur myuser screenshot.png
+python repo_scripts/blurimage.py --no-invert --blur myuser screenshot.png
 
 # Higher upscaling for very small text (slower)
-python scripts/blurimage.py --scale 3 --blur myuser screenshot.png
+python repo_scripts/blurimage.py --scale 3 --blur myuser screenshot.png
 ```
 
 **Pattern types:**
@@ -618,7 +618,7 @@ python scripts/blurimage.py --scale 3 --blur myuser screenshot.png
 | `--blur-regex` | case-sensitive | Raw regex patterns (add `(?i)` in pattern for case-insensitive) |
 | *(hardcoded)* | case-insensitive | `PXL*`, `*.png`, `*.jpg`, `*.mp4`, `*.json` filenames |
 
-See the module docstring in `scripts/blurimage.py` for a detailed explanation of the preprocessing pipeline, multi-pass OCR strategy, and two-level matching approach.
+See the module docstring in `repo_scripts/blurimage.py` for a detailed explanation of the preprocessing pipeline, multi-pass OCR strategy, and two-level matching approach.
 
 ---
 

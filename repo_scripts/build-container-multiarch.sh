@@ -5,14 +5,14 @@ set -euo pipefail
 # CONFIGURATION
 #=============================================================================
 readonly SCRIPT_DIR="$(dirname "$(realpath "$0")")"
-readonly INCLUDE_SH="scripts/include.sh"
+readonly INCLUDE_SH="include.sh"
 readonly PODMAN_VM_INIT_DISK_SIZE=100
 readonly PYTHON_VERSION=3.14
 readonly DEBIAN_VERSION=slim-trixie
 readonly DOCKER_IMAGE="docker.io/xomoxcc/openclaw-k8s-toggle-operator:python-${PYTHON_VERSION}-${DEBIAN_VERSION}"
 readonly DOCKER_IMAGE_LATEST="${DOCKER_IMAGE%:*}:latest"
 readonly PLATFORMS=("linux/amd64" "linux/arm64")
-readonly DOCKERFILE=Dockerfile
+readonly DOCKERFILE=../Dockerfile
 readonly DOCKER_BUILD_CONTEXT=$(dirname "$(realpath --relative-to="${SCRIPT_DIR}" "${SCRIPT_DIR}/${DOCKERFILE}")")
 readonly BUILDER_NAME=mbuilder
 readonly ENABLE_PARALLEL_BUILDS=0
@@ -157,9 +157,11 @@ build_with_docker() {
 build_with_podman() {
   log "Building with Podman manifest workflow..."
 
-  # Remove existing manifest if it exists
+  # Remove existing manifest/image if it exists
   echo podman manifest rm "${DOCKER_IMAGE}"
   podman manifest rm "${DOCKER_IMAGE}" 2>/dev/null || true
+  echo podman image rm "${DOCKER_IMAGE}"
+  podman image rm "${DOCKER_IMAGE}" 2>/dev/null || true
 
   # Track platform-specific data
   local -a platform_tags=()
@@ -188,7 +190,7 @@ build_with_podman() {
     log "Building for ${platform} -> ${platform_tag} (background)..."
     # shellcheck disable=SC2086
     if (( ${ENABLE_PARALLEL_BUILDS:-0} == 1 )) ; then
-      echo "(podman ${connect_arg} build \"${build_args[@]}\" --platform \"${platform}\" -t \"${platform_tag}\" \"${DOCKER_BUILD_CONTEXT}\") &"
+      echo "(podman ${connect_arg} build \"${build_args[@]}\" --platform \"${platform}\" -t \"${platform_tag}\" .) &"
       (
         podman ${connect_arg} build \
           "${build_args[@]}" \
@@ -307,5 +309,5 @@ main() {
 }
 
 # Run main and ensure cleanup
-trap stop_podman_vm_if_started EXIT
+trap 'stop_podman_vm_if_started || true' EXIT
 main "$@"
