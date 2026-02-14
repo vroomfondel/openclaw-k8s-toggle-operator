@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""
+r"""
 blurimage.py — OCR-based image redaction tool for blurring sensitive text in screenshots.
 
 Designed primarily for terminal/K9s screenshots where secrets, usernames, session IDs,
@@ -151,15 +151,19 @@ import pytesseract
 from pytesseract import Output
 
 
-def main() -> None:
+def build_parser() -> argparse.ArgumentParser:
+    """Build and return the argument parser for blurimage."""
     parser = argparse.ArgumentParser(
         description="Blur sensitive text in an image using OCR detection. See module docstring for full documentation.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"
             "  %(prog)s --blur myuser elasticc.io screenshot.png\n"
-            '  %(prog)s --blur myuser --blur-regex "secret\\S+" "[A-Z]{8,}" screenshot.png\n'
+            '  %(prog)s --blur myuser --blur-regex "secret\\S+" "[A-Z]{8,}" -- screenshot.png\n'
             "  %(prog)s --debug --blur myuser screenshot.png\n"
+            "\n"
+            "Note: When --blur-regex is the last flag before the image argument, use '--'\n"
+            "to prevent argparse from treating the filename as a regex pattern.\n"
         ),
     )
     parser.add_argument("--blur", nargs="+", default=[], help="Literal phrases to blur (re.escape'd, case-insensitive)")
@@ -172,9 +176,12 @@ def main() -> None:
     parser.add_argument("--no-invert", action="store_true", help="Skip preprocessing (for light-background images)")
     parser.add_argument("--scale", type=int, default=2, help="Upscale factor before OCR (default: 2, 1=off)")
     parser.add_argument("--debug", action="store_true", help="Print all OCR-detected lines before blurring")
-    parser.add_argument(
-        "image", nargs="?", default="Bildschirmfoto_2026-02-09_11-39-25.local.png", help="Path to input image"
-    )
+    parser.add_argument("image", help="Path to input image")
+    return parser
+
+
+def main() -> None:
+    parser = build_parser()
     args = parser.parse_args()
 
     if not args.blur and not args.blur_regex:
