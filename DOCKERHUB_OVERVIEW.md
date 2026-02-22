@@ -101,3 +101,20 @@ docker build -t openclaw-k8s-toggle-operator .
 # Docker Hub login only
 ./build-container-multiarch.sh login
 ```
+
+## License
+This project is licensed under the LGPL where applicable/possible — see [LICENSE.md](LICENSE.md). Some files/parts may use other licenses: [MIT](LICENSEMIT.md) | [GPL](LICENSEGPL.md) | [LGPL](LICENSELGPL.md). Always check per‑file headers/comments.
+
+
+## Authors
+- Repo owner (primary author)
+- Additional attributions are noted inline in code comments
+
+
+## Acknowledgments
+- Inspirations and snippets are referenced in code comments where appropriate.
+
+
+## ⚠️ Note
+
+This is a development/experimental project. For production use, review security settings, customize configurations, and test thoroughly in your environment. Provided "as is" without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software. Use at your own risk.
