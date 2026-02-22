@@ -1,7 +1,9 @@
 [![black-lint](https://github.com/vroomfondel/openclaw-k8s-toggle-operator/actions/workflows/checkblack.yml/badge.svg)](https://github.com/vroomfondel/openclaw-k8s-toggle-operator/actions/workflows/checkblack.yml)
 [![mypy and pytests](https://github.com/vroomfondel/openclaw-k8s-toggle-operator/actions/workflows/mypynpytests.yml/badge.svg)](https://github.com/vroomfondel/openclaw-k8s-toggle-operator/actions/workflows/mypynpytests.yml)
-![Cumulative Clones](https://img.shields.io/endpoint?logo=github&url=https://gist.githubusercontent.com/vroomfondel/9519842e68e2ce05e5e223cb502d9e3d/raw/openclaw-k8s-toggle-operator_clone_count.json)
+[![BuildAndPushMultiarch](https://github.com/vroomfondel/openclaw-k8s-toggle-operator/actions/workflows/buildmultiarchandpush.yml/badge.svg)](https://github.com/vroomfondel/openclaw-k8s-toggle-operator/actions/workflows/buildmultiarchandpush.yml)
+[![Cumulative Clones](https://img.shields.io/endpoint?logo=github&url=https://gist.githubusercontent.com/vroomfondel/9519842e68e2ce05e5e223cb502d9e3d/raw/openclaw-k8s-toggle-operator_clone_count.json)](https://github.com/vroomfondel/openclaw-k8s-toggle-operator)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/openclaw-k8s-toggle-operator?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=PyPi+Downloads)](https://pepy.tech/projects/openclaw-k8s-toggle-operator)
+[![PyPI](https://img.shields.io/pypi/v/openclaw-k8s-toggle-operator?logo=pypi&logoColor=white)](https://pypi.org/project/openclaw-k8s-toggle-operator/)
 
 [![Gemini_Generated_Image_7vikwe7vikwe7vik_250x250.png](https://github.com/vroomfondel/openclaw-k8s-toggle-operator/raw/main/Gemini_Generated_Image_7vikwe7vikwe7vik_250x250.png)](https://github.com/vroomfondel/openclaw-k8s-toggle-operator)
 

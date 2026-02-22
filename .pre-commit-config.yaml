@@ -37,6 +37,8 @@ repos:
           - opencv-python-headless
           - pytesseract
           - PyGithub
+          - pyyaml
+          - types-PyYAML
 
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.0
