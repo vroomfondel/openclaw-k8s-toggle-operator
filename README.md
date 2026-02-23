@@ -8,13 +8,17 @@
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/openclaw-k8s-toggle-operator?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=PyPi+Downloads)](https://pepy.tech/projects/openclaw-k8s-toggle-operator)
 [![PyPI](https://img.shields.io/pypi/v/openclaw-k8s-toggle-operator?logo=pypi&logoColor=white)](https://pypi.org/project/openclaw-k8s-toggle-operator/)
 
-[![Gemini_Generated_Image_7vikwe7vikwe7vik_250x250.png](Gemini_Generated_Image_7vikwe7vikwe7vik_250x250.png)](https://hub.docker.com/r/xomoxcc/openclaw-k8s-toggle-operator)
+[![Gemini_Generated_Image_7vikwe7vikwe7vik_250x250.png](https://raw.githubusercontent.com/vroomfondel/openclaw-k8s-toggle-operator/main/Gemini_Generated_Image_7vikwe7vikwe7vik_250x250.png)](https://hub.docker.com/r/xomoxcc/openclaw-k8s-toggle-operator)
 
 Matrix-controlled Kubernetes deployment toggle operator. Connects to a Matrix
 homeserver with E2E encryption and listens for chat commands to scale a K8s
 deployment between 0 and 1 replicas.
 
-![Operator startup in K9s](Bildschirmfoto_2026-02-09_11-39-25_blurred.png)
+![Operator startup in K9s](https://raw.githubusercontent.com/vroomfondel/openclaw-k8s-toggle-operator/main/Bildschirmfoto_2026-02-09_11-39-25_blurred.png)
+
+![Operator startup with JWT auth and crypto store migration](https://raw.githubusercontent.com/vroomfondel/openclaw-k8s-toggle-operator/main/Bildschirmfoto_2026-02-23_15-11-07_blurred.png)
+
+![Old crypto store key import and device trust](https://raw.githubusercontent.com/vroomfondel/openclaw-k8s-toggle-operator/main/Bildschirmfoto_2026-02-23_15-11-22_blurred.png)
 
 ## Bot Commands
 
