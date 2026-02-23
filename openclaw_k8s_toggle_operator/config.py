@@ -79,15 +79,11 @@ class OperatorConfig:
         raw_allowed = os.environ.get("ALLOWED_USERS", "")
         allowed_users = [u.strip() for u in raw_allowed.split(",") if u.strip()]
         if not allowed_users:
-            raise ValueError(
-                "ALLOWED_USERS environment variable is required and must contain at least one user ID"
-            )
+            raise ValueError("ALLOWED_USERS environment variable is required and must contain at least one user ID")
 
         auth_method = os.environ.get("AUTH_METHOD", "password").strip().lower()
         if auth_method not in ("password", "sso", "jwt"):
-            raise ValueError(
-                f"AUTH_METHOD must be 'password', 'sso', or 'jwt', got '{auth_method}'"
-            )
+            raise ValueError(f"AUTH_METHOD must be 'password', 'sso', or 'jwt', got '{auth_method}'")
 
         keycloak_url = ""
         keycloak_realm = ""
@@ -97,34 +93,22 @@ class OperatorConfig:
         if auth_method == "jwt":
             keycloak_url = os.environ.get("KEYCLOAK_URL", "").strip()
             if not keycloak_url:
-                raise ValueError(
-                    "KEYCLOAK_URL environment variable is required when AUTH_METHOD=jwt"
-                )
+                raise ValueError("KEYCLOAK_URL environment variable is required when AUTH_METHOD=jwt")
             keycloak_realm = os.environ.get("KEYCLOAK_REALM", "").strip()
             if not keycloak_realm:
-                raise ValueError(
-                    "KEYCLOAK_REALM environment variable is required when AUTH_METHOD=jwt"
-                )
+                raise ValueError("KEYCLOAK_REALM environment variable is required when AUTH_METHOD=jwt")
             keycloak_client_id = os.environ.get("KEYCLOAK_CLIENT_ID", "").strip()
             if not keycloak_client_id:
-                raise ValueError(
-                    "KEYCLOAK_CLIENT_ID environment variable is required when AUTH_METHOD=jwt"
-                )
-            keycloak_client_secret = os.environ.get(
-                "KEYCLOAK_CLIENT_SECRET", ""
-            ).strip()
-            jwt_login_type = os.environ.get(
-                "JWT_LOGIN_TYPE", "com.famedly.login.token.oauth"
-            ).strip()
+                raise ValueError("KEYCLOAK_CLIENT_ID environment variable is required when AUTH_METHOD=jwt")
+            keycloak_client_secret = os.environ.get("KEYCLOAK_CLIENT_SECRET", "").strip()
+            jwt_login_type = os.environ.get("JWT_LOGIN_TYPE", "com.famedly.login.token.oauth").strip()
             valid_login_types = (
                 "com.famedly.login.token.oauth",
                 "com.famedly.login.token",
                 "org.matrix.login.jwt",
             )
             if jwt_login_type not in valid_login_types:
-                raise ValueError(
-                    f"JWT_LOGIN_TYPE must be one of {valid_login_types}, got '{jwt_login_type}'"
-                )
+                raise ValueError(f"JWT_LOGIN_TYPE must be one of {valid_login_types}, got '{jwt_login_type}'")
 
         return cls(
             matrix_homeserver=os.environ.get(
@@ -134,12 +118,8 @@ class OperatorConfig:
             matrix_password=matrix_password,
             allowed_users=allowed_users,
             deployment_name=os.environ.get("DEPLOYMENT_NAME", "clawdbot").strip(),
-            deployment_namespace=os.environ.get(
-                "DEPLOYMENT_NAMESPACE", "clawdbot"
-            ).strip(),
-            crypto_store_path=os.environ.get(
-                "CRYPTO_STORE_PATH", "/data/crypto_store"
-            ).strip(),
+            deployment_namespace=os.environ.get("DEPLOYMENT_NAMESPACE", "clawdbot").strip(),
+            crypto_store_path=os.environ.get("CRYPTO_STORE_PATH", "/data/crypto_store").strip(),
             echo_mode=_parse_bool(os.environ.get("ECHO_MODE", "true")),
             auth_method=auth_method,
             sso_idp_id=os.environ.get("SSO_IDP_ID", "keycloak").strip(),

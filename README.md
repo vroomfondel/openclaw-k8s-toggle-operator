@@ -16,11 +16,6 @@ deployment between 0 and 1 replicas.
 
 ![Operator startup in K9s](Bildschirmfoto_2026-02-09_11-39-25_blurred.png)
 
-Extracted from the inline `clawdbot_operator.py` ConfigMap in the
-[Ansible infrastructure repo](https://github.com/vroomfondel/somestuff)
-(`roles/kubectlstuff/files/clawdbot_operator.py`).
-
-
 ## Bot Commands
 
 Send these as plain text messages in a Matrix room with the bot (encrypted or unencrypted):

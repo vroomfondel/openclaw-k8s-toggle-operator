@@ -138,9 +138,7 @@ install_and_import(packagename="cv2", pipname="opencv-python")
 import shutil
 
 if shutil.which("tesseract") is None:
-    raise SystemExit(
-        "tesseract is not installed or not in PATH. Install it, e.g.: apt install tesseract-ocr"
-    )
+    raise SystemExit("tesseract is not installed or not in PATH. Install it, e.g.: apt install tesseract-ocr")
 
 import argparse
 import re
@@ -209,9 +207,7 @@ def main() -> None:
 
     image_path = args.image
     p = Path(image_path)
-    output_path = str(
-        p.with_name(p.stem.removesuffix(".local") + "_blurred" + p.suffix)
-    )
+    output_path = str(p.with_name(p.stem.removesuffix(".local") + "_blurred" + p.suffix))
 
     img = cv2.imread(image_path)
     if img is None:
@@ -228,9 +224,7 @@ def main() -> None:
         # Upscale for better recognition of small monospaced terminal fonts.
         # Bounding boxes are scaled back after OCR.
         if scale > 1:
-            upscaled = cv2.resize(
-                img, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC
-            )
+            upscaled = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
         else:
             upscaled = img
 
@@ -239,24 +233,18 @@ def main() -> None:
         # Pass 1: Weighted grayscale (0.114*B + 0.587*G + 0.299*R) + OTSU
         # Best for white/yellow text. Blue text is underrepresented (~11% weight).
         gray1 = cv2.cvtColor(upscaled, cv2.COLOR_BGR2GRAY)
-        _, thresh1 = cv2.threshold(
-            gray1, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
-        )
+        _, thresh1 = cv2.threshold(gray1, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
         passes.append(thresh1)
 
         # Pass 2: Max-channel grayscale (max of B, G, R per pixel) + OTSU
         # Preserves ALL colored text equally. Blue(255,0,0) → 255 instead of → 29.
         gray2 = np.max(upscaled, axis=2).astype(np.uint8)
-        _, thresh2 = cv2.threshold(
-            gray2, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
-        )
+        _, thresh2 = cv2.threshold(gray2, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
         passes.append(thresh2)
 
         # Pass 3: Blue channel only (img[:,:,0] in BGR) + OTSU
         # Specifically targets blue/cyan terminal text (log output, error messages).
-        _, thresh3 = cv2.threshold(
-            upscaled[:, :, 0], 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
-        )
+        _, thresh3 = cv2.threshold(upscaled[:, :, 0], 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
         passes.append(thresh3)
 
         # Run OCR on each preprocessed image and merge results.
@@ -264,9 +252,7 @@ def main() -> None:
         all_results: list[dict[str, list]] = []  # type: ignore[type-arg]
         block_offset = 0
         for ocr_img in passes:
-            d_pass = pytesseract.image_to_data(
-                ocr_img, output_type=Output.DICT, config=custom_config
-            )
+            d_pass = pytesseract.image_to_data(ocr_img, output_type=Output.DICT, config=custom_config)
             if block_offset > 0:
                 d_pass["block_num"] = [b + block_offset for b in d_pass["block_num"]]
             # Scale bounding boxes back to original image coordinates
@@ -286,9 +272,7 @@ def main() -> None:
                 d[k].extend(d_pass[k])
     else:
         # No preprocessing — for images that already have dark text on light background
-        d = pytesseract.image_to_data(
-            img, output_type=Output.DICT, config=custom_config
-        )
+        d = pytesseract.image_to_data(img, output_type=Output.DICT, config=custom_config)
 
     # --- Build combined regex pattern ---
     # Literal phrases (--blur) are re.escape'd and wrapped in (?i:...) for case-insensitive matching.

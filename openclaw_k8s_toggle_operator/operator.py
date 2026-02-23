@@ -73,9 +73,7 @@ class OperatorBot:
         spec = dep.spec.replicas or 0
         ready = dep.status.ready_replicas or 0
         available = dep.status.available_replicas or 0
-        state = (
-            "running" if spec > 0 and ready > 0 else ("starting" if spec > 0 else "off")
-        )
+        state = "running" if spec > 0 and ready > 0 else ("starting" if spec > 0 else "off")
         return (
             f"Deployment is {state}\n"
             f"  Desired replicas : {spec}\n"
@@ -152,9 +150,7 @@ class OperatorBot:
 
         await self._matrix.send_message(
             room.room_id,
-            "I could not decrypt your message. "
-            "This may happen after a restart. "
-            "Please send your command again.",
+            "I could not decrypt your message. " "This may happen after a restart. " "Please send your command again.",
         )
 
     # -- Main loop -----------------------------------------------------------

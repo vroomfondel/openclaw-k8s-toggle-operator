@@ -26,9 +26,7 @@ from minimatrix.matrix_client import MatrixClientHandler
 
 CONFIG_DIR = Path("~/.config/openclaw-matrix-cli").expanduser()
 DEFAULT_CONFIG_FILE = CONFIG_DIR / "config.yaml"
-DEFAULT_CRYPTO_STORE = Path(
-    "~/.local/share/openclaw-matrix-cli/crypto_store"
-).expanduser()
+DEFAULT_CRYPTO_STORE = Path("~/.local/share/openclaw-matrix-cli/crypto_store").expanduser()
 
 # Mapping: config-file key -> env var name
 _ENV_MAP: dict[str, str] = {
@@ -215,9 +213,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="matrix_cli",
         description="Standalone Matrix CLI — send, listen, list rooms.",
     )
-    parser.add_argument(
-        "--config", "-c", help=f"YAML config file (default: {DEFAULT_CONFIG_FILE})"
-    )
+    parser.add_argument("--config", "-c", help=f"YAML config file (default: {DEFAULT_CONFIG_FILE})")
     parser.add_argument("--homeserver", help="Matrix homeserver URL")
     parser.add_argument("--user", help="Matrix username (localpart or full MXID)")
     parser.add_argument("--password", help="Matrix password")
@@ -232,12 +228,8 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["password", "sso", "jwt"],
         help="Authentication method",
     )
-    parser.add_argument(
-        "--keycloak-url", dest="keycloak_url", help="Keycloak base URL (for jwt auth)"
-    )
-    parser.add_argument(
-        "--keycloak-realm", dest="keycloak_realm", help="Keycloak realm (for jwt auth)"
-    )
+    parser.add_argument("--keycloak-url", dest="keycloak_url", help="Keycloak base URL (for jwt auth)")
+    parser.add_argument("--keycloak-realm", dest="keycloak_realm", help="Keycloak realm (for jwt auth)")
     parser.add_argument(
         "--keycloak-client-id",
         dest="keycloak_client_id",
@@ -248,17 +240,13 @@ def build_parser() -> argparse.ArgumentParser:
         dest="keycloak_client_secret",
         help="Keycloak client secret (for jwt auth)",
     )
-    parser.add_argument(
-        "--jwt-login-type", dest="jwt_login_type", help="Matrix login type for JWT"
-    )
+    parser.add_argument("--jwt-login-type", dest="jwt_login_type", help="Matrix login type for JWT")
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # --- send ---
     sp_send = subparsers.add_parser("send", help="Send a message to a room")
-    sp_send.add_argument(
-        "--room", "-r", required=True, help="Room ID (e.g. !abc:example.com)"
-    )
+    sp_send.add_argument("--room", "-r", required=True, help="Room ID (e.g. !abc:example.com)")
     sp_send.add_argument(
         "message",
         nargs="?",
@@ -268,9 +256,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # --- listen ---
     sp_listen = subparsers.add_parser("listen", help="Listen for messages in a room")
-    sp_listen.add_argument(
-        "--room", "-r", required=True, help="Room ID (e.g. !abc:example.com)"
-    )
+    sp_listen.add_argument("--room", "-r", required=True, help="Room ID (e.g. !abc:example.com)")
 
     # --- rooms ---
     subparsers.add_parser("rooms", help="List joined rooms")
@@ -308,9 +294,7 @@ def main() -> None:
             message = args.message
             if message is None:
                 if sys.stdin.isatty():
-                    parser.error(
-                        "No message provided — pass as argument or pipe via stdin"
-                    )
+                    parser.error("No message provided — pass as argument or pipe via stdin")
                 message = sys.stdin.read().strip()
                 if not message:
                     parser.error("Empty message from stdin")

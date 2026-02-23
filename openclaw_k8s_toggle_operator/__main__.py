@@ -33,40 +33,23 @@ async def _async_main() -> None:
 
     glogger.opt(raw=True).info(
         "\n{}\n",
-        title_border
-        + "\n"
-        + title_row
-        + "\n"
-        + separator
-        + "\n"
-        + "\n".join(lines[1:]),
+        title_border + "\n" + title_row + "\n" + separator + "\n" + "\n".join(lines[1:]),
     )
 
     try:
         cfg = OperatorConfig.from_env()
-        config_table = [
-            [f.name, "***" if f.name == "matrix_password" else getattr(cfg, f.name)]
-            for f in fields(cfg)
-        ]
+        config_table = [[f.name, "***" if f.name == "matrix_password" else getattr(cfg, f.name)] for f in fields(cfg)]
         cfg_table_str = tabulate(config_table, tablefmt="mixed_grid")
         cfg_lines = cfg_table_str.split("\n")
         cfg_width = len(cfg_lines[0])
         cfg_title = "configuration"
         cfg_title_border = "┍" + "━" * (cfg_width - 2) + "┑"
         cfg_title_row = "│ " + cfg_title.center(cfg_width - 4) + " │"
-        cfg_separator = (
-            cfg_lines[0].replace("┍", "┝").replace("┑", "┥").replace("┯", "┿")
-        )
+        cfg_separator = cfg_lines[0].replace("┍", "┝").replace("┑", "┥").replace("┯", "┿")
 
         glogger.opt(raw=True).info(
             "\n{}\n",
-            cfg_title_border
-            + "\n"
-            + cfg_title_row
-            + "\n"
-            + cfg_separator
-            + "\n"
-            + "\n".join(cfg_lines[1:]),
+            cfg_title_border + "\n" + cfg_title_row + "\n" + cfg_separator + "\n" + "\n".join(cfg_lines[1:]),
         )
     except ValueError as exc:
         glogger.error("Configuration error: {}", exc)
