@@ -8,6 +8,13 @@ KUBECTL_CONTEXT="arley@local"
 
 # echo \$0 in include.sh: $0
 
+
+DH_REPO_PUBLIC=true
+GH_REPO_PUBLIC=true
+
+REMOTE_ARM64_CONNECTION=""
+REMOTE_ARM64_SSH_IDENTITY=""
+
 declare -a include_local_sh
 include_local_sh[0]="include.local.sh"
 include_local_sh[1]="$(dirname "$0")/repo_scripts/include.local.sh"
