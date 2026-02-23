@@ -15,7 +15,7 @@ from loguru import logger as glogger
 from nio import InviteMemberEvent, MegolmEvent, RoomMessageText
 
 from openclaw_k8s_toggle_operator.config import OperatorConfig
-from openclaw_k8s_toggle_operator.matrix_client import MatrixClientHandler
+from minimatrix.matrix_client import MatrixClientHandler
 
 logger = glogger.bind(classname="OperatorBot")
 
@@ -73,7 +73,9 @@ class OperatorBot:
         spec = dep.spec.replicas or 0
         ready = dep.status.ready_replicas or 0
         available = dep.status.available_replicas or 0
-        state = "running" if spec > 0 and ready > 0 else ("starting" if spec > 0 else "off")
+        state = (
+            "running" if spec > 0 and ready > 0 else ("starting" if spec > 0 else "off")
+        )
         return (
             f"Deployment is {state}\n"
             f"  Desired replicas : {spec}\n"
@@ -150,7 +152,9 @@ class OperatorBot:
 
         await self._matrix.send_message(
             room.room_id,
-            "I could not decrypt your message. " "This may happen after a restart. " "Please send your command again.",
+            "I could not decrypt your message. "
+            "This may happen after a restart. "
+            "Please send your command again.",
         )
 
     # -- Main loop -----------------------------------------------------------
@@ -172,7 +176,7 @@ class OperatorBot:
         self._matrix.add_event_callback(self.on_megolm_event, MegolmEvent)
         self._matrix.add_event_callback(self.on_invite, InviteMemberEvent)
 
-        await self._matrix.initial_sync()
+        await self._matrix.initial_sync(auto_join=True)
         await self._matrix.trust_all_allowed_devices(self.config.allowed_users)
 
         self.startup_sync_done = True

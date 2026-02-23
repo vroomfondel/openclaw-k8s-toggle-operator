@@ -50,17 +50,28 @@ jobs:
           BUILDTIME=$(TZ='Europe/Berlin' date +'%Y-%m-%d %H:%M:%S %Z')
           echo "buildtime=${BUILDTIME}" >> $GITHUB_OUTPUT
 
+      - name: Set build variables
+        id: build_vars
+        run: |
+          BUILDTIME=$(TZ='Europe/Berlin' date +'%Y-%m-%d %H:%M:%S %Z')
+          PYTHON_VERSION=3.14
+          DEBIAN_VERSION=slim-trixie
+
+          TAGS="xomoxcc/openclaw-k8s-toggle-operator:latest,xomoxcc/openclaw-k8s-toggle-operator:python-${PYTHON_VERSION}-${DEBIAN_VERSION}"
+
+          echo "buildtime=${BUILDTIME}" >> $GITHUB_OUTPUT
+          echo "python_version=${PYTHON_VERSION}" >> $GITHUB_OUTPUT
+          echo "debian_version=${DEBIAN_VERSION}" >> $GITHUB_OUTPUT
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          # github.event_name ist hier dann immer "workflow_run"
           push: ${{ github.event_name != 'pull_request' }}
-          tags: "xomoxcc/openclaw-k8s-toggle-operator:latest,xomoxcc/openclaw-k8s-toggle-operator:python-3.14-slim-trixie"
+          tags: ${{ steps.build_vars.outputs.tags }}
           build-args: |
-            buildtime=${{ steps.berlin_time.outputs.buildtime }}
-            python_version=3.14
-            debian_version=slim-trixie
-          # tags: ${{ steps.<meta_id>.outputs.tags }}
-          # labels: ${{ steps.<meta_id>.outputs.labels }}
+            buildtime=${{ steps.build_vars.outputs.buildtime }}
+            python_version=${{ steps.build_vars.outputs.python_version }}
+            debian_version=${{ steps.build_vars.outputs.debian_version }}

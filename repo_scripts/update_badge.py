@@ -119,7 +119,9 @@ def main() -> None:
 
 
 def get_usage_info() -> None:
-    full_api_token: str = os.environ.get("PRIV_FULL_TOKEN", os.environ.get("REPO_TOKEN", ""))
+    full_api_token: str = os.environ.get(
+        "PRIV_FULL_TOKEN", os.environ.get("REPO_TOKEN", "")
+    )
 
     assert full_api_token is not None and len(full_api_token) > 0
 

@@ -8,11 +8,12 @@ from tabulate import tabulate
 
 from openclaw_k8s_toggle_operator import __version__, configure_logging
 from openclaw_k8s_toggle_operator.config import OperatorConfig
-from openclaw_k8s_toggle_operator.matrix_client import MatrixClientHandler
+from minimatrix.matrix_client import MatrixClientHandler
 from openclaw_k8s_toggle_operator.operator import OperatorBot
 
 configure_logging()
 glogger.enable("openclaw_k8s_toggle_operator")
+glogger.enable("minimatrix")
 
 
 async def _async_main() -> None:
@@ -31,23 +32,41 @@ async def _async_main() -> None:
     separator = lines[0].replace("┍", "┝").replace("┑", "┥").replace("┯", "┿")
 
     glogger.opt(raw=True).info(
-        "\n{}\n", title_border + "\n" + title_row + "\n" + separator + "\n" + "\n".join(lines[1:])
+        "\n{}\n",
+        title_border
+        + "\n"
+        + title_row
+        + "\n"
+        + separator
+        + "\n"
+        + "\n".join(lines[1:]),
     )
 
     try:
         cfg = OperatorConfig.from_env()
-        config_table = [[f.name, "***" if f.name == "matrix_password" else getattr(cfg, f.name)] for f in fields(cfg)]
+        config_table = [
+            [f.name, "***" if f.name == "matrix_password" else getattr(cfg, f.name)]
+            for f in fields(cfg)
+        ]
         cfg_table_str = tabulate(config_table, tablefmt="mixed_grid")
         cfg_lines = cfg_table_str.split("\n")
         cfg_width = len(cfg_lines[0])
         cfg_title = "configuration"
         cfg_title_border = "┍" + "━" * (cfg_width - 2) + "┑"
         cfg_title_row = "│ " + cfg_title.center(cfg_width - 4) + " │"
-        cfg_separator = cfg_lines[0].replace("┍", "┝").replace("┑", "┥").replace("┯", "┿")
+        cfg_separator = (
+            cfg_lines[0].replace("┍", "┝").replace("┑", "┥").replace("┯", "┿")
+        )
 
         glogger.opt(raw=True).info(
             "\n{}\n",
-            cfg_title_border + "\n" + cfg_title_row + "\n" + cfg_separator + "\n" + "\n".join(cfg_lines[1:]),
+            cfg_title_border
+            + "\n"
+            + cfg_title_row
+            + "\n"
+            + cfg_separator
+            + "\n"
+            + "\n".join(cfg_lines[1:]),
         )
     except ValueError as exc:
         glogger.error("Configuration error: {}", exc)

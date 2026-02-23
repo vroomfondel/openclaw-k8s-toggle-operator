@@ -35,7 +35,9 @@ def generate_totp(secret: str, period: int = 30, digits: int = 6) -> str:
 def post_json(url: str, payload: dict[str, str]) -> dict[str, Any]:
     """POST JSON and return parsed response."""
     data = json.dumps(payload).encode()
-    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
+    req = urllib.request.Request(
+        url, data=data, headers={"Content-Type": "application/json"}, method="POST"
+    )
     try:
         with urllib.request.urlopen(req) as resp:
             result: dict[str, Any] = json.loads(resp.read())
@@ -52,14 +54,22 @@ def main() -> None:
     totp_secret = os.environ.get("DOCKERHUB_TOTP_SECRET", "")
 
     if not user or not password:
-        print("ERROR: DOCKERHUB_ADMIN_USER and DOCKERHUB_ADMIN_PASSWORD must be set", file=sys.stderr)
+        print(
+            "ERROR: DOCKERHUB_ADMIN_USER and DOCKERHUB_ADMIN_PASSWORD must be set",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     # Step 1: login with username/password
     # Docker Hub returns HTTP 401 with login_2fa_token when MFA is required
     login_url = "https://hub.docker.com/v2/users/login/"
     data = json.dumps({"username": user, "password": password}).encode()
-    req = urllib.request.Request(login_url, data=data, headers={"Content-Type": "application/json"}, method="POST")
+    req = urllib.request.Request(
+        login_url,
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
     try:
         with urllib.request.urlopen(req) as r:
             resp = json.loads(r.read())
@@ -83,7 +93,9 @@ def main() -> None:
         sys.exit(1)
 
     if not totp_secret:
-        print("ERROR: MFA required but DOCKERHUB_TOTP_SECRET is not set", file=sys.stderr)
+        print(
+            "ERROR: MFA required but DOCKERHUB_TOTP_SECRET is not set", file=sys.stderr
+        )
         sys.exit(1)
 
     code = generate_totp(totp_secret)

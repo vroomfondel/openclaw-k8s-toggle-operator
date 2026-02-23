@@ -22,7 +22,9 @@ deployment between 0 and 1 replicas.
 ## Features
 
 - Scale a Kubernetes Deployment to 0 or 1 replicas via Matrix chat commands
-- E2E encryption support via matrix-nio with persistent crypto store
+- E2E encryption via **minimatrix** (matrix-nio wrapper) with persistent crypto store
+- Session reuse — persists Matrix access token and device ID across restarts
+- Auto-join pending room invites on startup
 - TOFU device trust for allowed users
 - Multiple auth methods: password, SSO, or JWT via Keycloak (ROPC + JWKS)
 - Clean signal handling (SIGTERM/SIGINT) for graceful container shutdown

@@ -94,7 +94,9 @@ class TestOperatorConfigFromEnv:
         with pytest.raises(ValueError, match="MATRIX_USER"):
             OperatorConfig.from_env()
 
-    def test_missing_matrix_password_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_missing_matrix_password_raises(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         _clear_env(monkeypatch)
         monkeypatch.setenv("MATRIX_USER", "botuser")
         monkeypatch.setenv("ALLOWED_USERS", "@alice:example.com")
@@ -102,7 +104,9 @@ class TestOperatorConfigFromEnv:
         with pytest.raises(ValueError, match="MATRIX_PASSWORD"):
             OperatorConfig.from_env()
 
-    def test_missing_allowed_users_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_missing_allowed_users_raises(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         _clear_env(monkeypatch)
         monkeypatch.setenv("MATRIX_USER", "botuser")
         monkeypatch.setenv("MATRIX_PASSWORD", "secret")
@@ -119,7 +123,9 @@ class TestOperatorConfigFromEnv:
         with pytest.raises(ValueError, match="ALLOWED_USERS"):
             OperatorConfig.from_env()
 
-    def test_whitespace_only_allowed_users_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_whitespace_only_allowed_users_raises(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         _clear_env(monkeypatch)
         monkeypatch.setenv("MATRIX_USER", "botuser")
         monkeypatch.setenv("MATRIX_PASSWORD", "secret")
@@ -147,7 +153,9 @@ class TestOperatorConfigFromEnv:
         assert cfg.allowed_users == ["@a:x.com", "@b:x.com", "@c:x.com"]
 
     @pytest.mark.parametrize("value", ["true", "TRUE", "True", "yes", "YES", "1"])
-    def test_echo_mode_true_variants(self, monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+    def test_echo_mode_true_variants(
+        self, monkeypatch: pytest.MonkeyPatch, value: str
+    ) -> None:
         _clear_env(monkeypatch)
         _set_required(monkeypatch)
         monkeypatch.setenv("ECHO_MODE", value)
@@ -157,7 +165,9 @@ class TestOperatorConfigFromEnv:
         assert cfg.echo_mode is True
 
     @pytest.mark.parametrize("value", ["false", "FALSE", "0", "no", "nope", ""])
-    def test_echo_mode_false_variants(self, monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+    def test_echo_mode_false_variants(
+        self, monkeypatch: pytest.MonkeyPatch, value: str
+    ) -> None:
         _clear_env(monkeypatch)
         _set_required(monkeypatch)
         monkeypatch.setenv("ECHO_MODE", value)
@@ -203,7 +213,9 @@ class TestOperatorConfigFromEnv:
 
         assert cfg.sso_idp_id == "my-idp"
 
-    def test_auth_method_case_insensitive(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_auth_method_case_insensitive(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         _clear_env(monkeypatch)
         _set_required(monkeypatch)
         monkeypatch.setenv("AUTH_METHOD", "  SSO  ")
@@ -212,7 +224,9 @@ class TestOperatorConfigFromEnv:
 
         assert cfg.auth_method == "sso"
 
-    def test_auth_method_jwt_with_required_fields(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_auth_method_jwt_with_required_fields(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         _clear_env(monkeypatch)
         _set_required(monkeypatch)
         monkeypatch.setenv("AUTH_METHOD", "jwt")
@@ -230,7 +244,9 @@ class TestOperatorConfigFromEnv:
         assert cfg.keycloak_client_secret == "my-secret"
         assert cfg.jwt_login_type == "com.famedly.login.token.oauth"
 
-    def test_auth_method_jwt_public_client(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_auth_method_jwt_public_client(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         _clear_env(monkeypatch)
         _set_required(monkeypatch)
         monkeypatch.setenv("AUTH_METHOD", "jwt")
@@ -242,7 +258,9 @@ class TestOperatorConfigFromEnv:
 
         assert cfg.keycloak_client_secret == ""
 
-    def test_auth_method_jwt_missing_keycloak_url_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_auth_method_jwt_missing_keycloak_url_raises(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         _clear_env(monkeypatch)
         _set_required(monkeypatch)
         monkeypatch.setenv("AUTH_METHOD", "jwt")
@@ -252,7 +270,9 @@ class TestOperatorConfigFromEnv:
         with pytest.raises(ValueError, match="KEYCLOAK_URL"):
             OperatorConfig.from_env()
 
-    def test_auth_method_jwt_missing_keycloak_realm_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_auth_method_jwt_missing_keycloak_realm_raises(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         _clear_env(monkeypatch)
         _set_required(monkeypatch)
         monkeypatch.setenv("AUTH_METHOD", "jwt")
@@ -262,7 +282,9 @@ class TestOperatorConfigFromEnv:
         with pytest.raises(ValueError, match="KEYCLOAK_REALM"):
             OperatorConfig.from_env()
 
-    def test_auth_method_jwt_missing_keycloak_client_id_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_auth_method_jwt_missing_keycloak_client_id_raises(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         _clear_env(monkeypatch)
         _set_required(monkeypatch)
         monkeypatch.setenv("AUTH_METHOD", "jwt")
@@ -272,7 +294,9 @@ class TestOperatorConfigFromEnv:
         with pytest.raises(ValueError, match="KEYCLOAK_CLIENT_ID"):
             OperatorConfig.from_env()
 
-    def test_auth_method_password_ignores_keycloak_vars(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_auth_method_password_ignores_keycloak_vars(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         _clear_env(monkeypatch)
         _set_required(monkeypatch)
         monkeypatch.setenv("AUTH_METHOD", "password")
@@ -316,7 +340,9 @@ class TestOperatorConfigFromEnv:
 
         assert cfg.jwt_login_type == "org.matrix.login.jwt"
 
-    def test_jwt_login_type_invalid_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_jwt_login_type_invalid_raises(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """JWT_LOGIN_TYPE rejects invalid values."""
         _clear_env(monkeypatch)
         _set_required(monkeypatch)

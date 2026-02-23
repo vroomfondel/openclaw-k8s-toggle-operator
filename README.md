@@ -20,11 +20,6 @@ Extracted from the inline `clawdbot_operator.py` ConfigMap in the
 [Ansible infrastructure repo](https://github.com/vroomfondel/somestuff)
 (`roles/kubectlstuff/files/clawdbot_operator.py`).
 
-## Status
-
-**Beta (v0.0.10)** — core Matrix bot with E2E encryption, K8s scaling, and
-JWT authentication via Keycloak are implemented. Packaging, Docker multi-arch
-images, and CI are in place.
 
 ## Bot Commands
 
@@ -44,7 +39,9 @@ room invitations from allowed users.
 
 - Runs as a single-replica **Deployment** in a dedicated namespace
 - Uses the **Kubernetes Python client** with in-cluster config to patch deployment scale
-- Connects to Matrix via **matrix-nio** with E2E encryption (`libolm`)
+- Connects to Matrix via **minimatrix** (wraps matrix-nio with E2E encryption, session reuse, and device trust)
+- **Session reuse** — persists Matrix access token and device ID across restarts (no re-login or key loss)
+- **Auto-join** — accepts pending room invites on startup
 - **TOFU device trust** — automatically trusts all devices of allowed users
 - **Multiple auth methods** — password, SSO, or JWT via Keycloak (ROPC + JWKS)
 - Crypto store must be on a **persistent volume** or the bot loses decryption keys on restart
