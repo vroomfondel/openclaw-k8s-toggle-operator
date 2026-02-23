@@ -168,6 +168,11 @@ class OperatorBot:
             jwt_login_type=self.config.jwt_login_type,
         )
 
+        # Import megolm sessions from old crypto stores (after restarts with new device_id)
+        sessions, devices = await self._matrix.import_keys_from_old_stores(delete_old=True)
+        if devices:
+            logger.info("Imported {} session(s) from {} old device(s)", sessions, devices)
+
         self._matrix.add_event_callback(self.on_message, RoomMessageText)
         self._matrix.add_event_callback(self.on_megolm_event, MegolmEvent)
         self._matrix.add_event_callback(self.on_invite, InviteMemberEvent)
